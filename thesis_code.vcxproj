@@ -20,13 +20,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseStation.cpp" />
+    <ClCompile Include="BaseStationConditions.cpp" />
+    <ClCompile Include="checkSurroundings.cpp" />
+    <ClCompile Include="Drone.cpp" />
     <ClCompile Include="Hexagon.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Button.cpp" />
+    <ClCompile Include="Optimal_points.cpp" />
     <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseStation.h" />
+    <ClInclude Include="BaseStationConditions.h" />
+    <ClInclude Include="checkSurroundings.h" />
+    <ClInclude Include="Drone.h" />
     <ClInclude Include="Hexagon.h" />
+    <ClInclude Include="Button.h" />
+    <ClInclude Include="Optimal_points.h" />
     <ClInclude Include="User.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -89,8 +99,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\George\source\repos\thesis_code\SDL2\include;C:\Users\George\source\repos\thesis_code\SDL2_ttf-2.0.15\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\George\source\repos\thesis_code\SDL2\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\George\source\repos\thesis_code\SDL2-devel-2.0.18-VC\SDL2-2.0.18\include;C:\Users\George\source\repos\thesis_code\SDL2_ttf-devel-2.0.15-VC\SDL2_ttf-2.0.15\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\George\source\repos\thesis_code\SDL2_ttf-devel-2.0.15-VC\SDL2_ttf-2.0.15\lib\x64;C:\Users\George\source\repos\thesis_code\SDL2-devel-2.0.18-VC\SDL2-2.0.18\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

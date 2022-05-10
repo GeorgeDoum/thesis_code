@@ -6,77 +6,116 @@
 #include "SDL_render.h"
 #include <SDL_ttf.h>
 #include <math.h>
+#include <string>
 #include <vector>
 #include <map>
-#include "Hexagon.cpp"
 #include "Hexagon.h"
 #include "BaseStation.h"
-#include "BaseStation.cpp"
+#include "BaseStationConditions.h"
 #include "User.h"
-#include "User.cpp"
-
+#include "checkSurroundings.h"
+#include "Button.h"
+#include "Optimal_points.h"
+#include "Drone.h"
+#include <chrono>
+#include <thread>
+#include <dos.h>
 int main(int argc, char* argv[])
 {
 	int length_of_side = 90;
 	int distance_to_side =0;
-	std::vector<int> x_points{ 625 ,490 ,490 ,760 ,625 ,625 ,760 ,760 , 625, 490};
-	std::vector<int> y_points{ 145 ,225 ,380 ,225 ,455 ,300 ,380 , 535 ,610, 535};
+	std::vector<int> x_points{ 625 ,490, 760, 625, 490, 760, 625, 490, 625, 760};
+	std::vector<int> y_points{ 145, 225, 225, 300, 380, 380, 455, 535, 610, 535};
+
 	std::vector<Hexagon> hexagons;
 	std::vector<BaseStation> baseStations;
-	std::multimap<int, User> users;
-	for (int i = 0; i < x_points.size(); i++)
-	{
-		Hexagon hexa(length_of_side, distance_to_side, x_points.at(i), y_points.at(i) , i+1);
-		hexagons.push_back(hexa);
-		hexagons.at(i).FillTheVectors();
-		int baseStationCenterX = hexagons.at(i).getXofHexagonCenter();
-		int baseStationCenterY = hexagons.at(i).getYofHexagonCenter();
-		BaseStation station (baseStationCenterX, baseStationCenterY, i+1);
-		baseStations.push_back(station);
-	}
+	std::vector<User> users;
+	std::vector<Drone> drones;
 
 	if (SDL_Init(SDL_INIT_VIDEO) == 0) {
 		SDL_Window* window = NULL;
 		SDL_Renderer* renderer = NULL;
+
 		const char* title = "UAV Optimal Placement";
 
 		if (SDL_CreateWindowAndRenderer(1280, 800, 0, &window, &renderer) == 0) {
 			SDL_bool done = SDL_FALSE;
+			SDL_Event event;
+			SDL_SetWindowTitle(window, title);
+			SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+			SDL_RenderClear(renderer);
+			SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+
+			srand(time(NULL));
+			//create objects for each entity of the simulator (hexagons, baseStations etc)
+			for (int i = 0; i < x_points.size(); i++)
+			{
+				Hexagon hexa(length_of_side, distance_to_side, x_points.at(i), y_points.at(i), i + 1);
+				hexagons.push_back(hexa);
+				hexagons.at(i).FillTheVectors();
+				int baseStationCenterX = hexagons.at(i).getXofHexagonCenter();
+				int baseStationCenterY = hexagons.at(i).getYofHexagonCenter();
+				BaseStation station (baseStationCenterX, baseStationCenterY, i+1);
+				baseStations.push_back(station);
+				int t = rand() % 40;
+				int temp = 0;
+				//create and post random number of users at random places across the simulated areas of cells
+				do
+				{
+					int userX = rand() % 850;
+					int userY = rand() % 687;
+					if (hexagons.at(i).CheckIfisInside(userX, userY) == true)
+					{
+						User user(userX, userY, i + 1);
+						users.push_back(user);
+						temp++;
+						SDL_RenderDrawPoint(renderer, userX, userY);
+						double channel = baseStations.at(i).provideService(user);
+						users.back().setChannel(channel);
+					}
+				} while (temp <= t);
+			}
+			// Handover technique. Check if surrounding baseStations offer a better channel for each user.
+			for (User& user : users)
+			{
+				checkSurroundingBasestations(user, baseStations, user.getStationId()-1);
+			}
+			//Draw table with channel load displays
+			for (BaseStation& station : baseStations)
+			{
+				drawTable(renderer, station.getNumberOfChannels(), station.getID(), 1);
+			}
+			Button uavButton;
+			uavButton.show(renderer);
+			int deploymentcounter = 0;
 			while (!done) {
-				SDL_Event event;
-				SDL_SetWindowTitle(window, title);
-				SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-				SDL_RenderClear(renderer);
-				SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+
 				for (int i = 0; i < hexagons.size(); i++)
 				{
 					hexagons.at(i).DrawHexagon(renderer);
 					baseStations.at(i).DrawLocation(renderer);
 				}
-				srand(time(NULL));
-				
-				for (int i = 0; i < x_points.size(); i++)
-				{
-					int t = rand() % 20;
-					int temp = 0;
-					do
-					{
-						int userX = rand() % 850;
-						int userY = rand() % 687;
-						if (hexagons.at(i).CheckIfisInside(userX, userY) == true)
-						{
-							User user(userX, userY, i + 1);
-							users.insert(std::pair<int, User>(i + 1, user));
-							temp++;
-							SDL_RenderDrawPoint(renderer, userX, userY);
-						}
-					} while (temp <= t);
-				}
-
 				SDL_RenderPresent(renderer);
 				while (SDL_PollEvent(&event)) {
 					if (event.type == SDL_QUIT) {
 						done = SDL_TRUE;
+					}
+					/* DEPLOY UAVs */
+					if (event.type == SDL_MOUSEBUTTONDOWN)
+					{
+						//if button "Deploy UAVS" is pushed
+						if ( (event.button.x >= 1100 && event.button.x <= 1250 )
+							&& (event.button.y >= 50 && event.button.y <= 75) && (deploymentcounter == 0))
+						{
+							//Deploy UAVs
+							deploymentcounter++;
+							drones = calculateOptimalPoints(baseStations, users, renderer);
+							//update baseStation Load Table
+							for (BaseStation& station : baseStations)
+							{
+								drawTable(renderer, station.getNumberOfChannels(), station.getID(), 2);
+							}
+						}
 					}
 				}
 			}
@@ -91,132 +130,3 @@ int main(int argc, char* argv[])
 	SDL_Quit();
 	return 0;
 }
-
-
-
-
-/*
-* points for hexagons
-int x = 625;
-int y = 145;
-
-int x1 = 490;
-int y1=225;
-
-int x2 = 490;
-int y2 = 380;
-
-int x3 = 760;
-int y3 = 225;
-
-int x4 = 625;
-int y4 = 455;
-
-int x5 = 625;
-int y5 = 300;
-
-int x6 = 760;
-int y6 = 380;
-
-x_points.push_back(625);
-x_points.push_back(490);
-x_points.push_back(490);
-x_points.push_back(760);
-x_points.push_back(625);
-x_points.push_back(625);
-x_points.push_back(760);
-
-y_points.push_back(145);
-y_points.push_back(225);
-y_points.push_back(380);
-y_points.push_back(225);
-y_points.push_back(455);
-y_points.push_back(300);
-y_points.push_back(380);*/
-//distance_to_side = sqrt(3) * (length_of_side / 2);
-
-
-
-
-
-
-/*
-// You shouldn't really use this statement, but it's fine for small programs
-using namespace std;
-
-// You must include the command line parameters for your main function to be recognized by SDL
-int main(int argc, char** args) {
-
-	// Pointers to our window and surface
-	SDL_Surface* winSurface = NULL;
-	SDL_Window* window = NULL;
-
-	// Initialize SDL. SDL_Init will return -1 if it fails.
-	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-		cout << "Error initializing SDL: " << SDL_GetError() << endl;
-		system("pause");
-		// End the program
-		return 1;
-	}
-
-	// Create our window
-	window = SDL_CreateWindow("Uav optimal Placement", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_SHOWN);
-
-	// Make sure creating the window succeeded
-	if (!window) {
-		cout << "Error creating window: " << SDL_GetError() << endl;
-		system("pause");
-		// End the program
-		return 1;
-	}
-
-	// Get the surface from the window
-	winSurface = SDL_GetWindowSurface(window);
-
-	// Make sure getting the surface succeeded
-	if (!winSurface) {
-		cout << "Error getting surface: " << SDL_GetError() << endl;
-		system("pause");
-		// End the program
-		return 1;
-	}
-
-	// Fill the window with a white rectangle
-	SDL_FillRect(winSurface, NULL, SDL_MapRGB(winSurface->format, 255, 255, 255));
-
-	// Update the window display
-	SDL_UpdateWindowSurface(window);
-
-	// Wait
-	system("pause");
-
-	// Destroy the window. This will also destroy the surface
-	SDL_DestroyWindow(window);
-
-	// Quit SDL
-	SDL_Quit();
-	// End the program
-	return 0;
-}*/
-
-
-/*
-for (int i = 0; i < x_points.size(); i++)
-{
-	SDL_RenderDrawLine(renderer, (x_points.at(i) + (length_of_side / 2)), (y_points.at(i) - distance_to_side), (x_points.at(i) + length_of_side), y_points.at(i));
-	SDL_RenderDrawLine(renderer, (x_points.at(i) + length_of_side), y_points.at(i), (x_points.at(i) + (length_of_side / 2)), (y_points.at(i) + distance_to_side));
-
-	SDL_RenderDrawLine(renderer, (x_points.at(i) + (length_of_side / 2)), (y_points.at(i) + distance_to_side), (x_points.at(i) - (length_of_side / 2)), (y_points.at(i) + distance_to_side)); //test
-
-	SDL_RenderDrawLine(renderer, (x_points.at(i) - (length_of_side/2)), (y_points.at(i) + distance_to_side), (x_points.at(i) - length_of_side), y_points.at(i));
-	SDL_RenderDrawLine(renderer, (x_points.at(i) - length_of_side), y_points.at(i), (x_points.at(i) - (length_of_side / 2)), (y_points.at(i) - distance_to_side));
-	SDL_RenderDrawLine(renderer, (x_points.at(i) - (length_of_side / 2)), (y_points.at(i) - distance_to_side), (x_points.at(i) + (length_of_side / 2)), (y_points.at(i) - distance_to_side));
-	x0 = (x_points.at(i) - (length_of_side / 2));
-	y0 = (y_points.at(i) + distance_to_side);
-	xc = x0 - distance_to_side + length_of_side + distance_to_side -(distance_to_side/2) - 5;
-	yc = y0 - distance_to_side + 1,5*length_of_side;
-
-	SDL_RenderDrawPoint(renderer, xc, yc);
-}
-SDL_RenderPresent(renderer);
-*/
