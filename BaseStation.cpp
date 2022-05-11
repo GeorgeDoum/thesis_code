@@ -109,7 +109,7 @@ double BaseStation::rayleigh_fading(long double variance)
 	double max_imaginarry = 0.9;
 	std::random_device rd1;
 	std::default_random_engine eng1(rd1());
-	std::uniform_real_distribution<double> distr1(min_imaginarry, max_imaginarry);
+	std::uniform_real_distribution<double> distr1(min_imaginarry, max_imaginarry); //normal_dist
 	double channelImaginarrySide = distr1(eng1);
 
 	long double channelRealSide = sqrt(variance/2)*randomRealSide;
