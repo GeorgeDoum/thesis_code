@@ -78,6 +78,12 @@ void Drone::publishPosition(int x , int y, SDL_Renderer* renderer)
 
 double Drone::calculatePathLoss(User& user)
 {    
+	                 /*    Optimal LAP Altitude for Maximum Coverage
+          Akram Al-Hourani, Student Member, IEEE, Sithamparanathan Kandeepan, Senior Member, 
+		                       IEEE, and Simon Lardner      
+                IEEE WIRELESS COMMUNICATIONS LETTERS, VOL. 3, NO. 6, DECEMBER 2014  */
+
+
 	double light_spd = 2.99792458e8; // The speed of light in vacuum in meters per second
 	double pi = 3.1415926535897932385; // Pi
 	int xOfUser = user.getX();
@@ -94,10 +100,10 @@ double Drone::calculatePathLoss(User& user)
 	int b = 50;
 	double nLos = 1.0;
 	double nNlos = 20;
-	double freeSpacePathloss = (20 * log(frequency)) + (20 * log( (4 * pi) / light_spd) );
+	double freeSpacePathloss = (20 * log10(frequency)) + (20 * log10( (4 * pi) / light_spd) );
 
-	double lineOfSightPL = freeSpacePathloss + (20 * log(linkDistance)) + nLos;
-	double nonLineOfSightPL = freeSpacePathloss + (20 * log(linkDistance)) + nNlos;
+	double lineOfSightPL = freeSpacePathloss + (20 * log10(linkDistance)) + nLos;
+	double nonLineOfSightPL = freeSpacePathloss + (20 * log10(linkDistance)) + nNlos;
 
 	double angleOfElevation = height_Drone / linkDistance;
 	double lineOfSightProbability = 1 / ( 1+ (a * exp(-b * (angleOfElevation-a) ) ) );
@@ -110,21 +116,15 @@ double Drone::calculatePathLoss(User& user)
 
 double Drone::rayleighFadingChannel(double variance)
 {
-	double min_real = 0.01;
-	double max_real = 0.09;
-	std::random_device rd;
-	std::default_random_engine eng(rd());
-	std::uniform_real_distribution<double> distr(min_real, max_real);
+	std::default_random_engine eng;
+	std::normal_distribution<double> distr(0, 1);
 	double randomRealSide = distr(eng);
 
-	double min_imaginarry = 0.1;
-	double max_imaginarry = 0.9;
-	std::random_device rd1;
-	std::default_random_engine eng1(rd1());
-	std::uniform_real_distribution<double> distr1(min_imaginarry, max_imaginarry);
+	std::default_random_engine eng1;
+	std::normal_distribution<double> distr1(0, 1);
 	double channelImaginarrySide = distr1(eng1);
 
-	double channelRealSide = sqrt(variance / 2) * randomRealSide;
+	long double channelRealSide = sqrt(variance / 2) * randomRealSide;
 	std::complex<double> complexNumberForChannel(channelRealSide, channelImaginarrySide);
 
 	double absoluteofComplexNumber = std::abs(complexNumberForChannel);

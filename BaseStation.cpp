@@ -80,6 +80,14 @@ void BaseStation::StationStatus()
 //COST 231 Hata model for pathloss
 double BaseStation::calculatePathLoss(User& user)
 {
+	                 /*           Reference
+	       International Journal of Computer Applications (0975 – 8887)
+		                 Volume 59– No.11, December 2012
+               Comparison of Okumura, Hata and COST-231 Models on
+                   the Basis of Path Loss and Signal Strength
+                                Yuvraj Singh  
+	    https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.303.4057&rep=rep1&type=pdf  */
+
 	int xOfUser = user.getX();
 	int yOfUser = user.getY();
 	int distX = abs(x_axis - xOfUser);
@@ -91,25 +99,20 @@ double BaseStation::calculatePathLoss(User& user)
 	double aHR = (3.20 * (log10(11.75 * hR)) * 2) - 4.97;
 	// C = 0 we are not simulating a metropolitan area
 
-	double pathloss = (46.3) + (33.9*log(frequency)) - (13.82*log(heightOfStationAntenna)) - (aHR) + ((44.9 - 6.55*log(heightOfStationAntenna))*(log(linkDistance)));
-
+	double A = 46.3 + (33.9 * log10(frequency)) - (13.28 * log10(heightOfStationAntenna)) - aHR;
+	double B = 44.9 - (6.55 * log10(heightOfStationAntenna));
+	double pathloss = A + (B * log10(linkDistance));
 	return pathloss;
 }
 
 double BaseStation::rayleigh_fading(long double variance)
 {
-	double min_real = 0.00000000000000001;
-	double max_real = 0.00000000000000009;
-	std::random_device rd;
-	std::default_random_engine eng(rd());
-	std::uniform_real_distribution<double> distr(min_real, max_real);
+	std::default_random_engine eng;
+	std::normal_distribution<double> distr(0, 1);
 	double randomRealSide = distr(eng);
 
-	double min_imaginarry = 0.1;
-	double max_imaginarry = 0.9;
-	std::random_device rd1;
-	std::default_random_engine eng1(rd1());
-	std::uniform_real_distribution<double> distr1(min_imaginarry, max_imaginarry); //normal_dist
+	std::default_random_engine eng1;
+	std::normal_distribution<double> distr1(0, 1);
 	double channelImaginarrySide = distr1(eng1);
 
 	long double channelRealSide = sqrt(variance/2)*randomRealSide;
@@ -131,9 +134,7 @@ double BaseStation::provideService(User& user)
 {
 	int userId = user.getUniqueID();
 	double pathloss = calculatePathLoss(user);
-	double pathLossTemp = pathloss / 10;;
-	long double variance = pow(10, pathLossTemp);
-	double channel = rayleigh_fading(variance);
+	double channel = rayleigh_fading(pathloss);
 
 	return channel;
 }
