@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 						users.push_back(user);
 						temp++;
 						SDL_RenderDrawPoint(renderer, userX, userY);
-						double channel = baseStations.at(i).provideService(user);
+						double channel = baseStations.at(i).provideService(user, 0);
 						users.back().setChannel(channel);
 					}
 				} while (temp <= t);

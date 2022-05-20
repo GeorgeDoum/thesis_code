@@ -22,6 +22,12 @@ public:
 	
 	void setUniqueID(int id);
 
+	void setPathLoss(double ploss);
+
+	void setTemporaryPathLoss(double loss);
+
+	void setSINR(double s_i_n_r);
+
 	int getAntennaHeight();
 
 	int getX();
@@ -34,6 +40,12 @@ public:
 
 	int getStationId();
 
+	double getPathLoss();
+
+	double getTemporaryPathLoss();
+
+	double getSINR();
+
 	void DrawLocation(SDL_Renderer* renderer);
 
 private:
@@ -43,4 +55,7 @@ private:
 	int heightOfUserAntenna;
 	int uniqueID;
 	double channel;
+	double pathLoss;
+	double tempPathLoss;
+	double SINR;
 };

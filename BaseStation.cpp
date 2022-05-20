@@ -5,6 +5,7 @@ BaseStation::BaseStation(int x, int y, int hex_ID)
 	setXaxis(x);
 	setYaxis(y);
 	setID(hex_ID);
+	setPrs();
 }
 
 void BaseStation::setXaxis(int x)
@@ -20,6 +21,23 @@ void BaseStation::setYaxis(int y)
 void BaseStation::setID(int hex_ID)
 {
 	hexagonId = hex_ID;
+}
+
+void BaseStation::setPrs()
+{
+	/*    Energy-Efficient and Interference-Aware Handover
+          Decision for the LTE-Advanced Femtocell Network   
+     IEEE ICC 2013 - Communication QoS, Reliability and Modeling Symposium   */
+
+	std::random_device rd{};
+	std::mt19937 gen{ rd() };
+	std::normal_distribution<double> distr(23, 3);
+	Prs = distr(gen);
+}
+
+double BaseStation::getPrs()
+{
+	return Prs;
 }
 
 int BaseStation::getX()
@@ -130,10 +148,23 @@ void BaseStation::assignChannel(double channel, int userId)
 }
 
 
-double BaseStation::provideService(User& user)
+double BaseStation::provideService(User& user, int temp)
 {
 	int userId = user.getUniqueID();
 	double pathloss = calculatePathLoss(user);
+
+	/*  - different temp, equals call of funtion from different algorithm .
+	    - temp = 0 equals the pathloss from the initial BaseStation for each user
+	    - temp = 1 equals the pathloss when we calculating the interference  */
+
+	if (temp == 0)
+	{
+		user.setPathLoss(pathloss);
+	}
+	if (temp == 1)
+	{
+		user.setTemporaryPathLoss(pathloss);
+	}
 	double channel = rayleigh_fading(pathloss);
 
 	return channel;

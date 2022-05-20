@@ -23,11 +23,15 @@ public:
 
 	void setID(int hex_ID);
 
+	void setPrs();
+
 	int getX();
 
 	int getY();
 
 	int getID();
+
+	double getPrs();
 
 	int getNumberOfChannels();
 
@@ -37,7 +41,7 @@ public:
 
 	void assignChannel(double channel, int userId);
 
-	double provideService(User& user);
+	double provideService(User& user, int temp);
 
 	double calculatePathLoss(User& user);
 
@@ -53,4 +57,5 @@ private:
 	int frequency = 2000; //Mhz
 	std::multimap<int,double> assignedChannels;
 	int heightOfStationAntenna = 35; //in meters
+	double Prs; //transmit power in dB
 };
