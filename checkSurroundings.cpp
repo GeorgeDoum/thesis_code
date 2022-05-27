@@ -17,7 +17,7 @@ double calculateInterference(User& user, std::vector<BaseStation>& basestations,
 		if (station.getID() != currentStationID)
 		{
 			double channel = station.provideService(user , 1);
-			double Pr = (station.getPrs() * channel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double Pr = (station.getPrs() * channel * (-10)) / user.getTemporaryPathLoss(); //Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			sum = sum + Pr;
 		}
 	}
@@ -39,7 +39,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 	std::map<int, double> candidateChannelsContainer;
 	std::map<int, double> SINRcontainer;
 
-	double Pr = (basestations.at(i).getPrs() * user.getChannel() * 5.8 * 5.8) / user.getPathLoss();
+	double Pr = (basestations.at(i).getPrs() * user.getChannel() *(-10)) / user.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 	double I = calculateInterference(user, basestations, user.getStationId()); 
 	double SINR = Pr / (nf + I);
 	std::cout << "THE SINR IS => " << SINR << std::endl;
@@ -70,7 +70,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel *(-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
@@ -147,7 +147,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
@@ -225,7 +225,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
@@ -302,7 +302,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel *(-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
@@ -379,7 +379,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
@@ -456,7 +456,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
@@ -533,7 +533,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
@@ -610,7 +610,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
@@ -687,7 +687,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
@@ -764,7 +764,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidateChannel = station.provideService(user, 1);
 			double candidateRSRP = station.getPrs() * candidateChannel;
 			double candidateServiceContinuety = (RSRPth + station.getPrs() - Pmax);
-			double candidatePr = (station.getPrs() * candidateChannel * 5.8 * 5.8) / user.getTemporaryPathLoss();
+			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
 			double candidateRIP = (candidatePr * candidateChannel) + nf;
