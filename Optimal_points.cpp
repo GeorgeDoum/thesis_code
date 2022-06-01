@@ -1,20 +1,21 @@
 #include "Optimal_points.h"
 
 struct Cluster {
-	int initialMendoidX, initialMendoidY;
+	int mendoidX, mendoidY;
 	int clusterNum; 
-	std::map<int,User> initialNearUsers;
+	std::map<int, User> initialNearUsers;
+	std::map<int, User> currentNearUsers;
 	double minDist;
 
 	Cluster() :
-		initialMendoidX(0.0),
-		initialMendoidY(0.0),
+		mendoidX(0.0),
+		mendoidY(0.0),
 		clusterNum(-1),
 		minDist(std::numeric_limits<double>::max()) {}
 
 	Cluster(int x, int y, int k) :
-		initialMendoidX(x),
-		initialMendoidY(y),
+		mendoidX(x),
+		mendoidY(y),
 		clusterNum(k),
 		minDist(std::numeric_limits<double>::max()) {}
 
@@ -22,12 +23,33 @@ struct Cluster {
 	{
 		initialNearUsers.insert({ user.getUniqueID(),user });
 	}
-	std::map<int,User> getClusterUsers()
+
+	void setX(int x)
+	{
+		mendoidX = x;
+	}
+
+	void setY(int y)
+	{
+		mendoidY = y;
+	}
+
+	void addCurrentUserToCluster(User& user)
+	{
+		currentNearUsers.insert({ user.getUniqueID(),user });
+	}
+	std::map<int, User> getInitialClusterUsers()
 	{
 		return initialNearUsers;
 	}
+
+	std::map<int, User> getCurrentClusterUsers()
+	{
+		return currentNearUsers;
+	}
+
 	double distance(Cluster c) {
-		return (c.initialMendoidX - initialMendoidX) * (c.initialMendoidX - initialMendoidX) + (c.initialMendoidY - initialMendoidY) * (c.initialMendoidY - initialMendoidY);
+		return (c.mendoidX - mendoidX) * (c.mendoidX - mendoidX) + (c.mendoidY - mendoidY) * (c.mendoidY - mendoidY);
 	}
 
 };
@@ -39,8 +61,8 @@ int findCloser(User& user, std::vector<Cluster>& clusters)
 	
 	for (Cluster& clr : clusters)
 	{
-		int distX = abs(clr.initialMendoidX - user.getX());
-		int distY = abs(clr.initialMendoidY - user.getY());
+		int distX = abs(clr.mendoidX - user.getX());
+		int distY = abs(clr.mendoidY - user.getY());
 		double dist = sqrt((distX ^ 2) + (distY ^ 2));
 		distances.insert({ clr.clusterNum ,  dist});
 	}
@@ -51,26 +73,101 @@ int findCloser(User& user, std::vector<Cluster>& clusters)
 	return clusterid;
 }
 
-void reallocateUserToCluster(User& user, std::vector<Cluster>& clusters, int idToGO)
+std::map<int,double> findCloserBaseStation(Cluster& cluster, std::vector<BaseStation>& basestations)
 {
-	for (Cluster& c : clusters)
+	std::map<int, double> distances;
+	std::map<int, double> ret;
+	for (BaseStation& station : basestations)
 	{
-		std::map<int, User> temp = c.getClusterUsers();
-		std::map<int, User>::iterator it = temp.find(user.getUniqueID());
-		if (it != temp.end())
-		{
-			c.getClusterUsers().erase(it->first);
-		}
+		int distX = abs(station.getX() - cluster.mendoidX);
+		int distY = abs(station.getY() - cluster.mendoidY);
+		double dist = sqrt((distX ^ 2) + (distY ^ 2));
+		distances.insert({ station.getID() ,  dist});
 	}
+	auto it = std::min_element(distances.begin(), distances.end(),
+		[](const auto& l, const auto& r) { return l.second < r.second; });
 
-	for (Cluster& clust : clusters)
+	ret.insert({ it->first, it->second });
+	return ret;
+}
+
+void reallocateUserToCluster(User& user, std::vector<Cluster>& clusters, int idToGO, int choice)
+{
+	switch (choice)
 	{
-		if (clust.clusterNum == idToGO)
+	case 0:
+		for (Cluster& c : clusters)
 		{
-			clust.addInitialUserToCluster(user);
+			std::map<int, User> temp = c.getInitialClusterUsers();
+			std::map<int, User>::iterator it = temp.find(user.getUniqueID());
+			if (it != temp.end())
+			{
+				c.getInitialClusterUsers().erase(it->first);
+			}
 		}
+
+		for (Cluster& clust : clusters)
+		{
+			if (clust.clusterNum == idToGO)
+			{
+				clust.addInitialUserToCluster(user);
+			}
+		}
+
+		break;
+	case 1:
+		for (Cluster& c : clusters)
+		{
+			std::map<int, User> temp = c.getCurrentClusterUsers();
+			std::map<int, User>::iterator it = temp.find(user.getUniqueID());
+			if (it != temp.end())
+			{
+				c.getCurrentClusterUsers().erase(it->first);
+				c.getInitialClusterUsers().erase(it->first);
+			}
+		}
+
+		for (Cluster& clust : clusters)
+		{
+			if (clust.clusterNum == idToGO)
+			{
+				clust.addCurrentUserToCluster(user);
+			}
+		}
+		break;
 	}
 }
+
+bool cmp(std::pair<int, double>& a,
+	std::pair<int, double>& b)
+{
+	return a.second > b.second;
+}
+
+std::vector<std::pair<int,double>> sort(std::map<int, double>&M)
+{
+
+	// Declare vector of pairs
+	std::vector<std::pair<int, double> > A;
+
+	// Copy key-value pair from Map
+	// to vector of pairs
+	for (auto& it : M) {
+		A.push_back(it);
+	}
+
+	// Sort using comparator function
+	sort(A.begin(), A.end(), cmp);
+
+	// Print the sorted value
+	for (auto& it : A) {
+
+		std::cout << it.first << ' '
+			<< it.second << std::endl;
+	}
+	return A;
+}
+
 
 std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations, std::vector<User>& users, SDL_Renderer* renderer)
 {
@@ -113,8 +210,8 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 
 		for (Cluster& c : clusters)
 		{
-			int dissiX = abs(user.getX() - c.initialMendoidX);
-			int dissiY = abs(user.getY() - c.initialMendoidY);
+			int dissiX = abs(user.getX() - c.mendoidX);
+			int dissiY = abs(user.getY() - c.mendoidY);
 			int totalDissim = dissiX + dissiY;
 			dissimilarities.insert({ c.clusterNum,totalDissim });
 		}
@@ -122,26 +219,119 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		auto it = std::min_element(dissimilarities.begin(), dissimilarities.end(),
 			[](const auto& l, const auto& r) { return l.second < r.second; });
 
-		reallocateUserToCluster(user, clusters, it->first);
+		reallocateUserToCluster(user, clusters, it->first, 0);
 		calculatedDissims.push_back(it->second);
 	}
 	for (auto& d : calculatedDissims)
 	{
 		A1 += d;
 	}
-
+	//USER CLUSTERING PROCESS
 	do
 	{
 		A0 = A1;
 		for (Cluster& clr : clusters)
 		{
+			int i = rand() % users.size();
+			int Xbackup = clr.mendoidX;
+			int Ybackup = clr.mendoidY;
+			clr.setX(users.at(i).getX());
+			clr.setY(users.at(i).getY());
+			
+			std::vector<int> calculatedDissims;
 			for (User& usr : users)
 			{
+				std::map<int, int> dissimilarities;
+				int clusterid = findCloser(usr, clusters);
+				clusters.at(clusterid - 1).addCurrentUserToCluster(usr);
 
+				for (Cluster& c : clusters)
+				{
+					int dissiX = abs(usr.getX() - c.mendoidX);
+					int dissiY = abs(usr.getY() - c.mendoidY);
+					int totalDissim = dissiX + dissiY;
+					dissimilarities.insert({ c.clusterNum,totalDissim });
+				}
+				auto it = std::min_element(dissimilarities.begin(), dissimilarities.end(),
+					[](const auto& l, const auto& r) { return l.second < r.second; });
+
+				reallocateUserToCluster(usr, clusters, it->first, 1);
+				calculatedDissims.push_back(it->second);
+			}
+			int B = 0;
+			for (auto& d : calculatedDissims)
+			{
+				B += d;
+			}
+			if (B < A1)
+			{
+				A1 = B;
+				for (Cluster& c : clusters)
+				{
+					c.initialNearUsers.clear();
+					for (auto it = c.currentNearUsers.begin(); it != c.currentNearUsers.end(); ++it)
+					{
+						c.initialNearUsers.insert({ it->first, it->second });
+					}
+				}
+			}
+			else
+			{
+				clr.setX(Xbackup);
+				clr.setY(Ybackup);
+				for (Cluster& c : clusters)
+				{
+					c.currentNearUsers.clear();
+				}
 			}
 		}
-		std::cout << "hello" <<std::endl;
-	} while (A0 - A1 < 0.000001);
+	} while (A0 - A1 > 0);
+	std::cout << "USER CLUSTERING PROCESS DONE" << std::endl;
+
+	double a = 0.5; //weightening factor
+	std::map<int, double> weightScores;
+	for (Cluster& cl : clusters)
+	{
+		std::map<int,double> closerBSID = findCloserBaseStation(cl, basestations);
+		double weight = 0.0;
+		weight = (a * cl.getCurrentClusterUsers().size()) + ((1 - a) * closerBSID.begin()->second);
+		weightScores.insert({ cl.clusterNum, weight });
+	}
+	
+	std::vector<std::pair<int,double>> sortedWeightScores = sort(weightScores);
+	std::cout << std::endl;
+	std::vector<int> idsOfFinalClusters;
+	int i = 0;
+	for (auto& scores : sortedWeightScores)
+	{
+		if (i < 10)
+		{
+			std::cout << scores.first << "   " << scores.second << std::endl;
+			idsOfFinalClusters.push_back(scores.first);
+		}
+		i++;
+	}
+
+	for (Cluster& cl : clusters)
+	{
+		for (auto& id : idsOfFinalClusters)
+		{
+			if (id == cl.clusterNum)
+			{
+				SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE); //should be deleted,just for debug
+				SDL_RenderDrawPoint(renderer, cl.mendoidX, cl.mendoidY); //should be deleted, just for debug
+
+				Drone drone(cl.mendoidX, cl.mendoidY, renderer);
+				std::map<int,User> users = cl.initialNearUsers;
+				std::vector<int> droneusersUniqueIDs = drone.provideService(users);
+
+				for (auto& st : basestations)
+				{
+					st.eraseChannels(droneusersUniqueIDs);
+				}
+			}
+		}
+	}
 
 	return drones;
 

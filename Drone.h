@@ -13,7 +13,7 @@ class Drone
 {
 public:
 
-	Drone(int x, int y, SDL_Renderer* renderer, int id);
+	Drone(int x, int y, SDL_Renderer* renderer/*, int id*/);
 
 	void setX(int x);
 
@@ -31,7 +31,7 @@ public:
 
 	void publishPosition(int x, int y, SDL_Renderer* renderer);
 
-	std::vector<int> provideService(std::vector<User>& users);
+	std::vector<int> provideService(std::map<int, User> clusterUsers);
 
 	double calculatePathLoss(User& user);
 

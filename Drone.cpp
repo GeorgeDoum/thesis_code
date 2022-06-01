@@ -1,10 +1,10 @@
 #include "Drone.h"
 
-Drone::Drone(int x, int y, SDL_Renderer* renderer, int id)
+Drone::Drone(int x, int y, SDL_Renderer* renderer/*, int id*/)
 {
 	setX(x);
 	setY(y);
-	setPower();
+	//setPower();
 	publishPosition(getX(), getY(), renderer);
 }
 
@@ -38,14 +38,14 @@ int Drone::getHexagonID()
 	return hexagonID;
 }
 
-void Drone::setPower()
+/*void Drone::setPower()
 {
 	//deployed drones will have remaining battery power between 70% -100%
 	std::random_device rand_dev;
 	std::mt19937 generator(rand_dev());
 	std::uniform_int_distribution<int> distr(7, 10);
 	battery_power = distr(generator);
-}
+}*/
 
 void Drone::publishPosition(int x , int y, SDL_Renderer* renderer)
 {
@@ -140,28 +140,26 @@ double Drone::ricianFadingChannel(double variance)
 	return channel;
 }
 
-std::vector<int> Drone::provideService(std::vector<User>& users)
+std::vector<int> Drone::provideService(std::map<int, User> clusterUsers)
 {
 	int counter = 0;
 	std::vector<int> usersIds;
-	if (battery_power == 7)
+	std::vector<User> users;
+
+	for (auto& clUsr : clusterUsers)
 	{
-		for (auto& usr : users)
-		{
-			if (counter < 5)
-			{
-				if ((abs(x_axis - usr.getX()) <= 100) && (abs(y_axis - usr.getY()) <= 50))
-				{
-					double pathloss = calculatePathLoss(usr);
-					double channel = ricianFadingChannel(pathloss);
-					assignedChannels.insert(std::pair<int, double>(usr.getUniqueID(), channel));
-					std::cout << channel <<std::endl;
-				}
-				usersIds.push_back(usr.getUniqueID());
-				counter++;
-			}
-		}
+		users.push_back(clUsr.second);
 	}
+
+	for (auto& usr : users)
+	{
+		double pathloss = calculatePathLoss(usr);
+		double channel = ricianFadingChannel(pathloss);
+		assignedChannels.insert(std::pair<int, double>(usr.getUniqueID(), channel));
+		std::cout << channel <<std::endl;
+		usersIds.push_back(usr.getUniqueID());
+	}
+		/*
 	else if (battery_power > 7 && battery_power <=9)
 	{
 		for (auto& usr : users)
@@ -198,7 +196,7 @@ std::vector<int> Drone::provideService(std::vector<User>& users)
 			}
 		}
 
-	}
+	}*/
 
 	return usersIds;
 }

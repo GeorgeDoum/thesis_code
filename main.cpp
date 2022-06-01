@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 				int baseStationCenterY = hexagons.at(i).getYofHexagonCenter();
 				BaseStation station (baseStationCenterX, baseStationCenterY, i+1);
 				baseStations.push_back(station);
-				int t = rand() % 40;
+				int t = rand() % 30;
 				int temp = 0;
 				//create and post random number of users at random places across the simulated areas of cells
 				do
