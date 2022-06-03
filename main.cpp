@@ -20,6 +20,7 @@
 #include <chrono>
 #include <thread>
 #include <dos.h>
+
 int main(int argc, char* argv[])
 {
 	int length_of_side = 90;

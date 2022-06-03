@@ -1,10 +1,9 @@
 #include "Drone.h"
 
-Drone::Drone(int x, int y, SDL_Renderer* renderer/*, int id*/)
+Drone::Drone(int x, int y, SDL_Renderer* renderer)
 {
 	setX(x);
 	setY(y);
-	//setPower();
 	publishPosition(getX(), getY(), renderer);
 }
 
@@ -38,15 +37,6 @@ int Drone::getHexagonID()
 	return hexagonID;
 }
 
-/*void Drone::setPower()
-{
-	//deployed drones will have remaining battery power between 70% -100%
-	std::random_device rand_dev;
-	std::mt19937 generator(rand_dev());
-	std::uniform_int_distribution<int> distr(7, 10);
-	battery_power = distr(generator);
-}*/
-
 void Drone::publishPosition(int x , int y, SDL_Renderer* renderer)
 {
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -69,8 +59,8 @@ void Drone::publishPosition(int x , int y, SDL_Renderer* renderer)
 
 	Message_rect.x = x;  //controls the rect's x coordinate 
 	Message_rect.y = y; // controls the rect's y coordinte
-	Message_rect.w = 15; // controls the width of the rect
-	Message_rect.h = 15; // controls the height of the rect
+	Message_rect.w = 10; // controls the width of the rect
+	Message_rect.h = 5; // controls the height of the rect
 	SDL_FreeSurface(SurfaceMessage);
 	SDL_RenderCopy(renderer, Message, NULL, &Message_rect);
 	SDL_DestroyTexture(Message);
@@ -153,50 +143,16 @@ std::vector<int> Drone::provideService(std::map<int, User> clusterUsers)
 
 	for (auto& usr : users)
 	{
-		double pathloss = calculatePathLoss(usr);
-		double channel = ricianFadingChannel(pathloss);
-		assignedChannels.insert(std::pair<int, double>(usr.getUniqueID(), channel));
-		std::cout << channel <<std::endl;
-		usersIds.push_back(usr.getUniqueID());
-	}
-		/*
-	else if (battery_power > 7 && battery_power <=9)
-	{
-		for (auto& usr : users)
+		if (counter < 10)
 		{
-			if (counter < 8)
-			{
-				if ((abs(x_axis - usr.getX()) <= 100) && (abs(y_axis - usr.getY()) <= 50))
-				{
-					double pathloss = calculatePathLoss(usr);
-					double channel = ricianFadingChannel(pathloss);
-					assignedChannels.insert(std::pair<int, double>(usr.getUniqueID(), channel));
-					std::cout << channel << std::endl;
-				}
-				usersIds.push_back(usr.getUniqueID());
-				counter++;
-			}
+			double pathloss = calculatePathLoss(usr);
+			double channel = ricianFadingChannel(pathloss);
+			assignedChannels.insert(std::pair<int, double>(usr.getUniqueID(), channel));
+			std::cout << channel <<std::endl;
+			usersIds.push_back(usr.getUniqueID());
 		}
+		counter++;
 	}
-	else if (battery_power > 9)
-	{
-		for (auto& usr : users)
-		{
-			if (counter < 10)
-			{
-				if ((abs(x_axis - usr.getX()) <= 100) && (abs(y_axis - usr.getY()) <= 50))
-				{
-					double pathloss = calculatePathLoss(usr);
-					double channel = ricianFadingChannel(pathloss);
-					assignedChannels.insert(std::pair<int, double>(usr.getUniqueID(), channel));
-					std::cout << channel << std::endl;
-				}
-				usersIds.push_back(usr.getUniqueID());
-				counter++;
-			}
-		}
-
-	}*/
 
 	return usersIds;
 }

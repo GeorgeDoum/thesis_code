@@ -13,7 +13,7 @@ class Drone
 {
 public:
 
-	Drone(int x, int y, SDL_Renderer* renderer/*, int id*/);
+	Drone(int x, int y, SDL_Renderer* renderer);
 
 	void setX(int x);
 
@@ -27,8 +27,6 @@ public:
 
 	int getHexagonID();
 
-	void setPower();
-
 	void publishPosition(int x, int y, SDL_Renderer* renderer);
 
 	std::vector<int> provideService(std::map<int, User> clusterUsers);
@@ -40,7 +38,6 @@ public:
 	double rayleighFadingChannel(double variance);
 
 private:
-	int battery_power; //in percent
 	int x_axis;
 	int y_axis;
 	int hexagonID;

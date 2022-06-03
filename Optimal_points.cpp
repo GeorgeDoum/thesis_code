@@ -2,6 +2,7 @@
 
 struct Cluster {
 	int mendoidX, mendoidY;
+	int oldX, oldY;
 	int clusterNum; 
 	std::map<int, User> initialNearUsers;
 	std::map<int, User> currentNearUsers;
@@ -10,12 +11,16 @@ struct Cluster {
 	Cluster() :
 		mendoidX(0.0),
 		mendoidY(0.0),
+		oldX(0.0),
+		oldY(0.0),
 		clusterNum(-1),
 		minDist(std::numeric_limits<double>::max()) {}
 
 	Cluster(int x, int y, int k) :
 		mendoidX(x),
 		mendoidY(y),
+		oldX(0.0),
+		oldY(0.0),
 		clusterNum(k),
 		minDist(std::numeric_limits<double>::max()) {}
 
@@ -32,6 +37,16 @@ struct Cluster {
 	void setY(int y)
 	{
 		mendoidY = y;
+	}
+
+	void setOldX(int x)
+	{
+		oldX = x;
+	}
+
+	void setOldY(int y)
+	{
+		oldY = y;
 	}
 
 	void addCurrentUserToCluster(User& user)
@@ -168,6 +183,22 @@ std::vector<std::pair<int,double>> sort(std::map<int, double>&M)
 	return A;
 }
 
+bool checkIfAlreadyIntoCluster(User& user, std::vector<Cluster>& clusters)
+{
+	for (auto& cl : clusters)
+	{
+		std::map<int, User>::iterator it = cl.initialNearUsers.find(user.getUniqueID());
+		std::map<int, User>::iterator it1 = cl.currentNearUsers.find(user.getUniqueID());
+		if ((it != cl.initialNearUsers.end()) && (it1 != cl.currentNearUsers.end()))
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+}
 
 std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations, std::vector<User>& users, SDL_Renderer* renderer)
 {
@@ -175,7 +206,10 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 	*											&&						
 				An Unsupervised Machine Learning Approach for UAV-Aided Offloading of 5G Cellular Networks
 						Lefteris Tsipi , Michail Karavolos and Demosthenes Vouyioukas
-			Telecom 2022, 3, 86–102. https://doi.org/10.3390/telecom3010005 | https://www.mdpi.com/journal/telecom    */
+			Telecom 2022, 3, 86–102. https://doi.org/10.3390/telecom3010005 | https://www.mdpi.com/journal/telecom    
+
+												*/
+
 	std::cout << "UDP ALGORITHM" << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
@@ -183,7 +217,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 	int k = ceil(users.size() / static_cast<double>(10));
 	std::cout << "out of  " << users.size() << " and 10 users per drone we have K  =  " << k << std::endl;
 
-	/* Randomly choose initial mendoids for each cluster that we created*/
+	// Randomly choose initial mendoids for each cluster that we created
 	for (int i=0; i<k; i++)
 	{
 		int x = rand() % 440 +420;
@@ -285,7 +319,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 				}
 			}
 		}
-	} while (A0 - A1 > 0);
+	} while (A0 - A1 > 0.000001);
 	std::cout << "USER CLUSTERING PROCESS DONE" << std::endl;
 
 	double a = 0.5; //weightening factor
@@ -329,123 +363,169 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 				{
 					st.eraseChannels(droneusersUniqueIDs);
 				}
+				drones.push_back(drone);
 			}
 		}
 	}
 
-	return drones;
-
-
-
-
-
-
-
-
-
-
-	/*
+		/*			
+	*  THIS IS THE END OF UDP ALGORITHM
+	* 
+	*     BELOW IS THE K-MEAN MENDOID 
+	         CLUSTERING ALGORITHM  
+	*               */
+/*
 	std::cout << "KDP ALGORITHM" << std::endl;
-	*/
-	/*
-	std::cout << "DRONE PLACEMENT GEORGE" << std::endl;
-
 	std::vector<Drone> drones;
-	for (auto& station : basestations)
+	std::vector<Cluster> clusters;
+
+	int k = ceil(users.size() / static_cast<double>(10));
+	std::cout << "out of  " << users.size() << " and 10 users per drone we have K  =  " << k << std::endl;
+
+	// Randomly choose initial mendoids for each cluster that we created
+	for (int i = 0; i < k; i++)
 	{
-		int numberOfUsersPerHexagon = 0;
-		for (auto& usr : users)
+		int x = rand() % 440 + 420;
+		int y = rand() % 487 + 150;
+		SDL_SetRenderDrawColor(renderer, 250, 10, 205, SDL_ALPHA_OPAQUE);
+		SDL_RenderDrawPoint(renderer, x, y);
+		Cluster s = Cluster(x, y, i + 1);
+		clusters.emplace_back(s);
+	}
+	//WARNING MAYBE A CLUSTER DOESNT HAVE USERS TO CALCULATE THE MEAN
+	bool convergence = false;
+	
+
+	do
+	{
+		int convergencecounter = 0;
+		//find the closest medoid to each user as an initial calculation
+		for (User& usr : users)
+		{
+			int clusterid = findCloser(usr, clusters);
+			bool check = checkIfAlreadyIntoCluster(usr, clusters);
+			if (check)
 			{
-				if (station.getID() == usr.getStationId())
-					numberOfUsersPerHexagon++;
+				clusters.at(static_cast<std::vector<Cluster, std::allocator<Cluster>>::size_type>(clusterid) - 1).addInitialUserToCluster(usr);
+
 			}
-
-			if (numberOfUsersPerHexagon >= 20)
+		}
+		//find the mean of all assigned users and calculate  the new mendoids
+		for (Cluster& clu : clusters)
+		{
+			double meanX = 0.0;
+			double meanY = 0.0;
+			int newX = 0;
+			int newY = 0;
+			for (auto& clusterUsr : clu.initialNearUsers)
 			{
-
-				int stationId = station.getID();
-				std::vector<int> xCoordinateOfUsers;
-				std::vector<int> yCoordinateOfUsers;
-				std::vector<int> usersUniqueIDs;
-				int stationY = station.getY();
-
-				for (auto& user : users)
-				{
-					if (stationId == user.getStationId())
-					{
-						xCoordinateOfUsers.push_back(user.getX());
-						yCoordinateOfUsers.push_back(user.getY());
-						usersUniqueIDs.push_back(user.getUniqueID());
-					}
-				}
-
-				std::vector<int> xUpperSideOfHexagon;
-				std::vector<int> yUpperSideOfHexagon;
-				std::vector<int> xLowerSideOfHexagon;
-				std::vector<int> yLowerSideOfHexagon;
-				std::vector<int> upperUsersUniqueIDs;
-				std::vector<int> lowerUsersUniqueIDs;
-				int counter = 0;
-
-				for (auto& temp : yCoordinateOfUsers)
-				{
-					if (temp >= stationY)
-					{
-						xUpperSideOfHexagon.push_back(xCoordinateOfUsers.at(counter));
-						upperUsersUniqueIDs.push_back(usersUniqueIDs.at(counter));
-						yUpperSideOfHexagon.push_back(temp);
-					}
-					else
-					{
-						xLowerSideOfHexagon.push_back(xCoordinateOfUsers.at(counter));
-						lowerUsersUniqueIDs.push_back(usersUniqueIDs.at(counter));
-						yLowerSideOfHexagon.push_back(temp);
-					}
-					counter++;
-				}
-				std::vector<User> drone1Users;
-				std::vector<User> drone2Users;
-
-				for (auto& usrT : users)
-				{
-					if (usrT.getStationId() == stationId)
-					{
-						for (auto& us1 : upperUsersUniqueIDs)
-						{
-							if (usrT.getUniqueID() == us1)
-								drone1Users.push_back(usrT);
-						}
-
-						for (auto& us2 : lowerUsersUniqueIDs)
-						{
-							if (usrT.getUniqueID() == us2)
-								drone2Users.push_back(usrT);
-						}
-					}
-				}
-
-				int drone1X = (std::accumulate(xUpperSideOfHexagon.begin(), xUpperSideOfHexagon.end(), 0)) / xUpperSideOfHexagon.size();
-				int drone1Y = (std::accumulate(yUpperSideOfHexagon.begin(), yUpperSideOfHexagon.end(), 0)) / yUpperSideOfHexagon.size();
-
-				int drone2X = (std::accumulate(xLowerSideOfHexagon.begin(), xLowerSideOfHexagon.end(), 0)) / xLowerSideOfHexagon.size();
-				int drone2Y = (std::accumulate(yLowerSideOfHexagon.begin(), yLowerSideOfHexagon.end(), 0)) / yLowerSideOfHexagon.size();
-
-				Drone drone1(drone1X, drone1Y, renderer, stationId);
-				Drone drone2(drone2X, drone2Y, renderer, stationId);
-				std::vector<int> drone1usersUniqueIDs = drone1.provideService(drone1Users);
-				std::vector<int> drone2usersUniqueIDs = drone2.provideService(drone2Users);
-
-				for (auto& st : basestations)
-				{
-					st.eraseChannels(drone1usersUniqueIDs);
-					st.eraseChannels(drone2usersUniqueIDs);
-				}
-
-				drones.push_back(drone1);
-				drones.push_back(drone2);
+				meanX = meanX + clusterUsr.second.getX();
+				meanY = meanY + clusterUsr.second.getY();
+				//temp.push_back(clusterUsr.second.getUniqueID());
+			}
+			newX = meanX / clu.initialNearUsers.size();
+			newY = meanY / clu.initialNearUsers.size();
+			clu.setOldX(clu.mendoidX);
+			clu.setOldY(clu.mendoidY);
+			clu.setX(newX);
+			clu.setY(newY);
+		}
+		//find the closest medoid to each user as an new calculation
+		for (User& usr : users)
+		{
+			int clusterid = findCloser(usr, clusters);
+			bool check = checkIfAlreadyIntoCluster(usr, clusters);
+			if (check)
+			{
+				clusters.at(static_cast<std::vector<Cluster, std::allocator<Cluster>>::size_type>(clusterid) - 1).addCurrentUserToCluster(usr);
+			}
+		}
+		//check if none cluster assignments change
+		for (Cluster& clu : clusters)
+		{
+			if ((clu.oldX == clu.mendoidX) && (clu.oldY == clu.mendoidY))
+			{
+				convergencecounter++;
 			}
 		}
 
-	}*/
+		if (convergencecounter == clusters.size())
+		{
+			convergence = true;
+			for (Cluster& clu : clusters)
+			{
+				clu.initialNearUsers.clear();
+			}
+		}
+		else
+		{
+			convergence = false;
+			for (Cluster& clu : clusters)
+			{
+				clu.initialNearUsers.clear();
+				clu.currentNearUsers.clear();
+			}
+		}
+
+	} while (!convergence);
+
+	for (Cluster& clu : clusters)
+	{
+		for (auto& usr : clu.currentNearUsers)
+		{
+			clu.initialNearUsers.insert({ usr.first, usr.second });
+		}
+	}
+	std::cout << "K-MEAN CLUSTERING PROCESS DONE" << std::endl;
+
+	double a = 0.5; //weightening factor
+	std::map<int, double> weightScores;
+	for (Cluster& cl : clusters)
+	{
+		std::map<int, double> closerBSID = findCloserBaseStation(cl, basestations);
+		double weight = 0.0;
+		weight = (a * cl.getCurrentClusterUsers().size()) + ((1 - a) * closerBSID.begin()->second);
+		weightScores.insert({ cl.clusterNum, weight });
+	}
+
+
+	std::vector<std::pair<int, double>> sortedWeightScores = sort(weightScores);
+	std::cout << std::endl;
+	std::vector<int> idsOfFinalClusters;
+	int i = 0;
+	for (auto& scores : sortedWeightScores)
+	{
+		if (i < 10)
+		{
+			std::cout << scores.first << "   " << scores.second << std::endl;
+			idsOfFinalClusters.push_back(scores.first);
+		}
+		i++;
+	}
+
+	for (Cluster& cl : clusters)
+	{
+		for (auto& id : idsOfFinalClusters)
+		{
+			if (id == cl.clusterNum)
+			{
+				SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE); //should be deleted,just for debug
+				SDL_RenderDrawPoint(renderer, cl.mendoidX, cl.mendoidY); //should be deleted, just for debug
+
+				Drone drone(cl.mendoidX, cl.mendoidY, renderer);
+				std::map<int, User> users = cl.initialNearUsers;
+				std::vector<int> droneusersUniqueIDs = drone.provideService(users);
+
+				for (auto& st : basestations)
+				{
+					st.eraseChannels(droneusersUniqueIDs);
+				}
+				drones.push_back(drone);
+			}
+		}
+	}
+
+	*/
+	return drones;
 
 }
