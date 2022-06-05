@@ -323,6 +323,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 	std::cout << "USER CLUSTERING PROCESS DONE" << std::endl;
 
 	double a = 0.5; //weightening factor
+	//calculate weightScores
 	std::map<int, double> weightScores;
 	for (Cluster& cl : clusters)
 	{
@@ -331,7 +332,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		weight = (a * cl.getCurrentClusterUsers().size()) + ((1 - a) * closerBSID.begin()->second);
 		weightScores.insert({ cl.clusterNum, weight });
 	}
-	
+	//Sort in descending order and get the D = 10 with the biggest scores
 	std::vector<std::pair<int,double>> sortedWeightScores = sort(weightScores);
 	std::cout << std::endl;
 	std::vector<int> idsOfFinalClusters;
@@ -345,16 +346,13 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		}
 		i++;
 	}
-
+	//The optimal final clusters with the coordinates that the drones should be deployed & cover
 	for (Cluster& cl : clusters)
 	{
 		for (auto& id : idsOfFinalClusters)
 		{
 			if (id == cl.clusterNum)
 			{
-				SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE); //should be deleted,just for debug
-				SDL_RenderDrawPoint(renderer, cl.mendoidX, cl.mendoidY); //should be deleted, just for debug
-
 				Drone drone(cl.mendoidX, cl.mendoidY, renderer);
 				std::map<int,User> users = cl.initialNearUsers;
 				std::vector<int> droneusersUniqueIDs = drone.provideService(users);
@@ -367,14 +365,13 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			}
 		}
 	}
-
 		/*			
 	*  THIS IS THE END OF UDP ALGORITHM
 	* 
 	*     BELOW IS THE K-MEAN MENDOID 
 	         CLUSTERING ALGORITHM  
 	*               */
-/*
+	/*
 	std::cout << "KDP ALGORITHM" << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
@@ -392,10 +389,8 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		Cluster s = Cluster(x, y, i + 1);
 		clusters.emplace_back(s);
 	}
-	//WARNING MAYBE A CLUSTER DOESNT HAVE USERS TO CALCULATE THE MEAN
-	bool convergence = false;
-	
 
+	bool convergence = false;
 	do
 	{
 		int convergencecounter = 0;
@@ -421,7 +416,6 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			{
 				meanX = meanX + clusterUsr.second.getX();
 				meanY = meanY + clusterUsr.second.getY();
-				//temp.push_back(clusterUsr.second.getUniqueID());
 			}
 			newX = meanX / clu.initialNearUsers.size();
 			newY = meanY / clu.initialNearUsers.size();
@@ -448,7 +442,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 				convergencecounter++;
 			}
 		}
-
+		//check if every cluster reached convergence. If true ,stop the calculations, the clusters are final
 		if (convergencecounter == clusters.size())
 		{
 			convergence = true;
@@ -479,6 +473,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 	std::cout << "K-MEAN CLUSTERING PROCESS DONE" << std::endl;
 
 	double a = 0.5; //weightening factor
+	//calculate the weightScores
 	std::map<int, double> weightScores;
 	for (Cluster& cl : clusters)
 	{
@@ -488,7 +483,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		weightScores.insert({ cl.clusterNum, weight });
 	}
 
-
+	//Sort in descending order and get the D = 10 with the biggest scores
 	std::vector<std::pair<int, double>> sortedWeightScores = sort(weightScores);
 	std::cout << std::endl;
 	std::vector<int> idsOfFinalClusters;
@@ -502,16 +497,13 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		}
 		i++;
 	}
-
+	//The optimal final clusters with the coordinates that the drones should be deployed & cover
 	for (Cluster& cl : clusters)
 	{
 		for (auto& id : idsOfFinalClusters)
 		{
 			if (id == cl.clusterNum)
 			{
-				SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE); //should be deleted,just for debug
-				SDL_RenderDrawPoint(renderer, cl.mendoidX, cl.mendoidY); //should be deleted, just for debug
-
 				Drone drone(cl.mendoidX, cl.mendoidY, renderer);
 				std::map<int, User> users = cl.initialNearUsers;
 				std::vector<int> droneusersUniqueIDs = drone.provideService(users);
@@ -525,6 +517,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		}
 	}
 
+	// END OF KDP ALGORITHM
 	*/
 	return drones;
 
