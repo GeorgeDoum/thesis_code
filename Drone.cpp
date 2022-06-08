@@ -71,7 +71,13 @@ double Drone::calculatePathLoss(User& user)
 	                 /*    Optimal LAP Altitude for Maximum Coverage
           Akram Al-Hourani, Student Member, IEEE, Sithamparanathan Kandeepan, Senior Member, 
 		                       IEEE, and Simon Lardner      
-                IEEE WIRELESS COMMUNICATIONS LETTERS, VOL. 3, NO. 6, DECEMBER 2014  */
+                IEEE WIRELESS COMMUNICATIONS LETTERS, VOL. 3, NO. 6, DECEMBER 2014  
+											&&
+				Unmanned Aerial Vehicle Applications over Cellular Networks for 5G and Beyond
+								Hongliang Zhang Lingyang Song Zhu Han
+											
+								Elevation Angle-Based Model Pathloss Calculation
+											*/
 
 
 	double light_spd = 2.99792458e8; // The speed of light in vacuum in meters per second
