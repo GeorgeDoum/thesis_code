@@ -154,6 +154,7 @@ std::vector<int> Drone::provideService(std::map<int, User> clusterUsers)
 			double pathloss = calculatePathLoss(usr);
 			double channel = ricianFadingChannel(pathloss);
 			assignedChannels.insert(std::pair<int, double>(usr.getUniqueID(), channel));
+			assignedPathloss.insert(std::pair<int, double>(usr.getUniqueID(), pathloss));
 			std::cout << channel <<std::endl;
 			usersIds.push_back(usr.getUniqueID());
 		}

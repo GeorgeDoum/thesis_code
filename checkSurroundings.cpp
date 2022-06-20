@@ -45,9 +45,9 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 	std::cout << "THE SINR IS => " << SINR << std::endl;
 	SINRcontainer.insert({ basestations.at(i).getID(), SINR });
 	double RSRP = basestations.at(i).getPrs() * user.getChannel();
-	double RIP = (Pr * user.getChannel()) + nf;
+	//double RIP = (Pr * user.getChannel()) + nf;
 
-	double RSRPth = -53.9794; //minimum RSRPth is 100dbm. 100dbm equals 3.33333333e-6 power(W). pow2db(3.33333333e-6) = -53.9794 dB
+	double RSRPth = -130; //minimum RSRPth is -100dbm. -100dbm equals 1e-13 power(W). pow2db(1e-13) = -130. dB
 	double Pmax = -50; // https://mdpi-res.com/d_attachment/electronics/electronics-08-00796/article_deploy/electronics-08-00796.pdf?version=1563278598 Pmax = 18 dbm equals 0.000001 power (W) which equals -50 dB
 
 	double sustainedServiceContinuety = (RSRPth + basestations.at(i).getPrs() - Pmax);
@@ -57,7 +57,7 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 		std::cout << "YES" << std::endl;
 		stationsThatProvideServiceContinuety.push_back(basestations.at(i));
 		candidateChannelsContainer.insert({ basestations.at(i).getID(), user.getChannel() });
-		RIPcontainer.insert( {basestations.at(i).getID(), RIP  });
+		RIPcontainer.insert( {basestations.at(i).getID(), I  });
 		RSRPcontainer.insert({basestations.at(i).getID(), RSRP });
 	}
 
@@ -73,11 +73,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel *(-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert( {station.getID(), candidateRIP  });
+				RIPcontainer.insert( {station.getID(), interf  });
 				RSRPcontainer.insert({station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });
@@ -150,11 +150,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert({ station.getID(), candidateRIP });
+				RIPcontainer.insert({ station.getID(), interf });
 				RSRPcontainer.insert({ station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });
@@ -228,11 +228,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert({ station.getID(), candidateRIP });
+				RIPcontainer.insert({ station.getID(), interf });
 				RSRPcontainer.insert({ station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });
@@ -305,11 +305,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel *(-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert({ station.getID(), candidateRIP });
+				RIPcontainer.insert({ station.getID(), interf });
 				RSRPcontainer.insert({ station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });
@@ -382,11 +382,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert({ station.getID(), candidateRIP });
+				RIPcontainer.insert({ station.getID(), interf });
 				RSRPcontainer.insert({ station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });
@@ -459,11 +459,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert({ station.getID(), candidateRIP });
+				RIPcontainer.insert({ station.getID(), interf });
 				RSRPcontainer.insert({ station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });
@@ -536,11 +536,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert({ station.getID(), candidateRIP });
+				RIPcontainer.insert({ station.getID(), interf });
 				RSRPcontainer.insert({ station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });
@@ -613,11 +613,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert({ station.getID(), candidateRIP });
+				RIPcontainer.insert({ station.getID(), interf });
 				RSRPcontainer.insert({ station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });
@@ -690,11 +690,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert({ station.getID(), candidateRIP });
+				RIPcontainer.insert({ station.getID(), interf });
 				RSRPcontainer.insert({ station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });
@@ -767,11 +767,11 @@ void checkSurroundingBasestations(User& user, std::vector<BaseStation>& basestat
 			double candidatePr = (station.getPrs() * candidateChannel * (-10)) / user.getTemporaryPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double interf = calculateInterference(user, basestations, station.getID());
 			double candidateSINR = candidatePr / (nf + interf);
-			double candidateRIP = (candidatePr * candidateChannel) + nf;
+			//double candidateRIP = (candidatePr * candidateChannel) + nf;
 			if (candidateRSRP > candidateServiceContinuety)
 			{
 				stationsThatProvideServiceContinuety.push_back(station);
-				RIPcontainer.insert({ station.getID(), candidateRIP });
+				RIPcontainer.insert({ station.getID(), interf });
 				RSRPcontainer.insert({ station.getID(), candidateRSRP });
 				candidateChannelsContainer.insert({ station.getID(), candidateChannel });
 				SINRcontainer.insert({ station.getID(),candidateSINR });

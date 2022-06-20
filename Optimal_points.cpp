@@ -353,18 +353,22 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		{
 			if (id == cl.clusterNum)
 			{
-				Drone drone(cl.mendoidX, cl.mendoidY, renderer);
-				std::map<int,User> users = cl.initialNearUsers;
-				std::vector<int> droneusersUniqueIDs = drone.provideService(users);
-
-				for (auto& st : basestations)
+				if (cl.initialNearUsers.size() > 5)
 				{
-					st.eraseChannels(droneusersUniqueIDs);
+					Drone drone(cl.mendoidX, cl.mendoidY, renderer);
+					std::map<int, User> users = cl.initialNearUsers;
+					std::vector<int> droneusersUniqueIDs = drone.provideService(users);
+					for (auto& st : basestations)
+					{
+						st.eraseChannels(droneusersUniqueIDs);
+					}
+					drones.push_back(drone);
 				}
-				drones.push_back(drone);
+
 			}
 		}
 	}
+
 		/*			
 	*  THIS IS THE END OF UDP ALGORITHM
 	* 
@@ -504,21 +508,59 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		{
 			if (id == cl.clusterNum)
 			{
-				Drone drone(cl.mendoidX, cl.mendoidY, renderer);
-				std::map<int, User> users = cl.initialNearUsers;
-				std::vector<int> droneusersUniqueIDs = drone.provideService(users);
-
-				for (auto& st : basestations)
+				if (cl.initialNearUsers.size() > 3)
 				{
-					st.eraseChannels(droneusersUniqueIDs);
+					Drone drone(cl.mendoidX, cl.mendoidY, renderer);
+					std::map<int, User> users = cl.initialNearUsers;
+					std::vector<int> droneusersUniqueIDs = drone.provideService(users);
+
+					for (auto& st : basestations)
+					{
+						st.eraseChannels(droneusersUniqueIDs);
+					}
+					drones.push_back(drone);
 				}
-				drones.push_back(drone);
+
 			}
 		}
 	}
-
-	// END OF KDP ALGORITHM
 	*/
+	// END OF KDP ALGORITHM
+
 	return drones;
 
 }
+/*
+//To calculate the offloading
+double percentage = 0.0;
+for (auto& d : drones)
+{
+	std::multimap<int, double> get = d.getChannels();
+	int s = get.size();
+	int s1 = users.size();
+	double percentage1 = ((static_cast<double>(s) / s1) * 100);
+	percentage = percentage + percentage1;
+	std::cout << percentage << "  %" << std::endl;
+}
+
+//to calculate the Rss
+for (auto& d : drones)
+{
+	double sumPr = 0;
+	for (auto& ch : d.getChannels())
+	{
+		double pathloss = 0.0;
+		for (auto& pa : d.getPathlosses())
+		{
+			if (pa.first == ch.first)
+			{
+				pathloss = pa.second;
+			}
+		}
+		long double Pr = -10 * ch.second;
+		sumPr = sumPr + Pr;
+	}
+
+	std::cout << sumPr << std::endl;
+
+}*/

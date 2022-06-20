@@ -37,6 +37,16 @@ public:
 
 	double rayleighFadingChannel(double variance);
 
+	std::multimap<int, double> getChannels()
+	{
+		return assignedChannels;
+	}
+
+	std::multimap<int, double> getPathlosses()
+	{
+		return assignedPathloss;
+	}
+
 private:
 	int x_axis;
 	int y_axis;
@@ -44,5 +54,6 @@ private:
 	int frequency = 2000; //in Mhz
 	int height_Drone = 200; //in meters
 	std::multimap<int, double> assignedChannels;
+	std::multimap<int, double> assignedPathloss;
 };
 
