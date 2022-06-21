@@ -209,7 +209,32 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			Telecom 2022, 3, 86–102. https://doi.org/10.3390/telecom3010005 | https://www.mdpi.com/journal/telecom    
 
 												*/
+	
+												
+	//calculate total mean RSs before UAV deployment
+	double generalSum = 0.0;
+	for (auto& s : basestations)
+	{
+		double sumPr = 0;
+		for (auto& ss : s.getChannels())
+		{
+			double pathloss = 0.0;
+			for (auto& pa : s.getPathlosses())
+			{
+				if (pa.first == ss.first)
+				{
+					pathloss = pa.second;
+				}
+			}
+			double Pr = (-6.9 * (ss.second * ss.second)) / pathloss;
+			sumPr = sumPr + Pr;
+		}
+		double something = sumPr/s.getChannels().size();
+		generalSum = (generalSum + something);
+		std::cout << "RSS => " << generalSum << std::endl;
+	}
 
+	
 	std::cout << "UDP ALGORITHM" << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
@@ -368,7 +393,34 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			}
 		}
 	}
-
+	//to calculate the Rss after UAV deployement
+	double generalSum1 = 0.0;
+	int i1 = 1;
+	
+	for (auto& d : drones)
+	{
+		double sumPr = 0;
+		for (auto& ch : d.getChannels())
+		{
+			double pathloss = 0.0;
+			for (auto& pa : d.getPathlosses())
+			{
+				if (pa.first == ch.first)
+				{
+					pathloss = pa.second;
+				}
+			}
+			double Pr = (-6.9 * (ch.second *ch.second) ) / pathloss;
+			sumPr = sumPr + Pr;
+		}
+		double something = sumPr;
+		generalSum1 = (generalSum1 + something/i1);
+		double output = generalSum - generalSum1;
+		std::cout << "RSS => " << output << std::endl;
+		i++;
+	}
+	
+		
 		/*			
 	*  THIS IS THE END OF UDP ALGORITHM
 	* 
@@ -524,7 +576,36 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			}
 		}
 	}
+
+
+		//to calculate the Rss after UAV deployement
+	double generalSum1 = 0.0;
+	int i1 = 1;
+
+	for (auto& d : drones)
+	{
+		double sumPr = 0;
+		for (auto& ch : d.getChannels())
+		{
+			double pathloss = 0.0;
+			for (auto& pa : d.getPathlosses())
+			{
+				if (pa.first == ch.first)
+				{
+					pathloss = pa.second;
+				}
+			}
+			double Pr = (-6.9 * (ch.second *ch.second) ) / pathloss;
+			sumPr = sumPr + Pr;
+		}
+		double something = sumPr;
+		generalSum1 = (generalSum1 + something/i1);
+		double output = generalSum - generalSum1;
+		std::cout << "RSS => " << output << std::endl;
+		i++;
+	}
 	*/
+	
 	// END OF KDP ALGORITHM
 
 	return drones;
@@ -542,25 +623,4 @@ for (auto& d : drones)
 	percentage = percentage + percentage1;
 	std::cout << percentage << "  %" << std::endl;
 }
-
-//to calculate the Rss
-for (auto& d : drones)
-{
-	double sumPr = 0;
-	for (auto& ch : d.getChannels())
-	{
-		double pathloss = 0.0;
-		for (auto& pa : d.getPathlosses())
-		{
-			if (pa.first == ch.first)
-			{
-				pathloss = pa.second;
-			}
-		}
-		long double Pr = -10 * ch.second;
-		sumPr = sumPr + Pr;
-	}
-
-	std::cout << sumPr << std::endl;
-
-}*/
+*/

@@ -87,6 +87,7 @@ double Drone::calculatePathLoss(User& user)
 	int distX = abs(x_axis - xOfUser);
 	int distY = abs(y_axis - yOfUser);
 	int linkDistance = sqrt((distX ^ 2) + (distY ^ 2));
+	linkDistance = linkDistance;
 	//In this simulation we assume we are in an urban enviroment thus we define the following parameters based on the thesis references
 	// (buildUpRatio,buildingsPerUnitArea,heightDestribution) Urban(0.5,500,50)
 	//(nLos, nNlos) | Urban (1.0,20)

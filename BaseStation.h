@@ -23,8 +23,6 @@ public:
 
 	void setID(int hex_ID);
 
-	void setPrs();
-
 	int getX();
 
 	int getY();
@@ -50,12 +48,22 @@ public:
 	//After the handover to new BaseStations we erase the already ocupied channels of the current baseStation
 	void eraseChannels(std::vector<int>& ids);
 
+	std::multimap<int, double> getChannels()
+	{
+		return assignedChannels;
+	}
+
+	std::multimap<int, double> getPathlosses()
+	{
+		return assignedPathlosses;
+	}
 private:
 	int x_axis;
 	int y_axis;
 	int hexagonId;
 	int frequency = 2000; //Mhz
 	std::multimap<int,double> assignedChannels;
+	std::multimap<int, double> assignedPathlosses;
 	int heightOfStationAntenna = 35; //in meters
-	double Prs; //transmit power in dB
+	double Prs = 13;  //transmit power in dB
 };

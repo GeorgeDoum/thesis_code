@@ -5,7 +5,6 @@ BaseStation::BaseStation(int x, int y, int hex_ID)
 	setXaxis(x);
 	setYaxis(y);
 	setID(hex_ID);
-	setPrs();
 }
 
 void BaseStation::setXaxis(int x)
@@ -21,18 +20,6 @@ void BaseStation::setYaxis(int y)
 void BaseStation::setID(int hex_ID)
 {
 	hexagonId = hex_ID;
-}
-
-void BaseStation::setPrs()
-{
-	/*    Energy-Efficient and Interference-Aware Handover
-          Decision for the LTE-Advanced Femtocell Network   
-     IEEE ICC 2013 - Communication QoS, Reliability and Modeling Symposium   */
-
-	std::random_device rd{};
-	std::mt19937 gen{ rd() };
-	std::normal_distribution<double> distr(23, 3);
-	Prs = distr(gen);
 }
 
 double BaseStation::getPrs()
@@ -166,7 +153,7 @@ double BaseStation::provideService(User& user, int temp)
 		user.setTemporaryPathLoss(pathloss);
 	}
 	double channel = rayleigh_fading(pathloss);
-
+	assignedPathlosses.insert(std::pair<int, double>(userId, channel));
 	return channel;
 }
 
