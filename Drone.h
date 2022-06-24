@@ -65,6 +65,6 @@ private:
 	std::multimap<int, double> assignedChannels;
 	std::multimap<int, double> assignedPathloss;
 	int BandWidth = 5000000; //in Hz (5MHz)
-	double Prs = 23; //in dB
+	double Prs = 23; //in dBm
 };
 

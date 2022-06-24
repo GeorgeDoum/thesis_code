@@ -65,6 +65,6 @@ private:
 	std::multimap<int,double> assignedChannels;
 	std::multimap<int, double> assignedPathlosses;
 	int heightOfStationAntenna = 35; //in meters
-	double Prs = 43;  //transmit power in dB
+	double Prs = 43;  //transmit power in dBm
 	int BandWidth = 5000000; //in Hz (5MHz)
 };

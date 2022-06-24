@@ -110,10 +110,15 @@ int main(int argc, char* argv[])
 						if ( (event.button.x >= 1100 && event.button.x <= 1250 )
 							&& (event.button.y >= 50 && event.button.y <= 75) && (deploymentcounter == 0))
 						{
+							auto start = std::chrono::steady_clock::now();
 							//Deploy UAVs
 							deploymentcounter++;
 							drones = calculateOptimalPoints(baseStations, users, renderer);
 							//update baseStation Load Table
+							auto end = std::chrono::steady_clock::now();
+							std::cout << "Elapsed time in nanoseconds: "
+								<< std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+								<< " ns" << std::endl;
 							for (BaseStation& station : baseStations)
 							{
 								drawTable(renderer, station.getNumberOfChannels(), station.getID(), 2);

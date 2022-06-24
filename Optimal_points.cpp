@@ -63,7 +63,7 @@ struct Cluster {
 		return currentNearUsers;
 	}
 
-	double distance(Cluster c) {
+	double distance(Cluster c, int x, int y) {
 		return (c.mendoidX - mendoidX) * (c.mendoidX - mendoidX) + (c.mendoidY - mendoidY) * (c.mendoidY - mendoidY);
 	}
 
@@ -257,6 +257,110 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		std::cout << "RSS => " << generalSum << std::endl;
 	}
 
+	std::cout << "Mean-Shift ALGORITHM" << std::endl;
+	std::vector<Drone> drones;
+	std::vector<Cluster> clusters;
+	int windowSize = 50;
+	bool convergence = false;
+	int i = 0;
+
+	do{
+		int convergencecounter = 0;
+		int x = rand() % 440 + 420;
+		int y = rand() % 487 + 150;
+		Cluster cl = Cluster(x, y, i + 1);
+		i++;
+		do
+		{
+			for (auto& usr : users)
+			{
+				if ((abs(x - usr.getX()) <= windowSize) && (abs(y - usr.getY()) <= windowSize))
+				{
+					cl.addInitialUserToCluster(usr);
+				}
+			}
+			double meanX = 0.0;
+			double meanY = 0.0;
+			int newX = 0;
+			int newY = 0;
+			for (auto& clusterUsr : cl.getInitialClusterUsers())
+			{
+				meanX = meanX + clusterUsr.second.getX();
+				meanY = meanY + clusterUsr.second.getY();
+			}
+			newX = meanX / cl.initialNearUsers.size();
+			newY = meanY / cl.initialNearUsers.size();
+			cl.setOldX(cl.mendoidX);
+			cl.setOldY(cl.mendoidY);
+			cl.setX(newX);
+			cl.setY(newY);
+
+			for (auto& usr : users)
+			{
+				if ((abs(cl.mendoidX - usr.getX()) <= windowSize) && (abs(cl.mendoidY - usr.getY()) <= windowSize))
+				{
+					cl.addCurrentUserToCluster(usr);
+				}
+			}
+			meanX = 0.0;
+			meanY = 0.0;
+			newX = 0;
+			newY = 0;
+			for (auto& clusterUsr : cl.getCurrentClusterUsers())
+			{
+				meanX = meanX + clusterUsr.second.getX();
+				meanY = meanY + clusterUsr.second.getY();
+			}
+			newX = meanX / cl.currentNearUsers.size();
+			newY = meanY / cl.currentNearUsers.size();
+			cl.setX(newX);
+			cl.setY(newY);
+
+			if ((cl.oldX == newX) && (cl.oldY == newY))
+			{
+				convergencecounter++;
+			}
+			cl.initialNearUsers.clear();
+			for (auto it = cl.currentNearUsers.begin(); it != cl.currentNearUsers.end(); ++it)
+			{
+				cl.initialNearUsers.insert({ it->first, it->second });
+			}
+			cl.currentNearUsers.clear();
+		} while (convergencecounter == 0);
+
+		if (cl.initialNearUsers.size() > 7)
+		{
+			//check for same coordinates
+			//check for close mendoids
+			clusters.emplace_back(cl);
+		}
+
+	} while (clusters.size() < 10);
+
+
+
+	int droneid = 1;
+	for (Cluster& cl : clusters)
+	{
+		Drone drone(cl.mendoidX, cl.mendoidY, droneid, renderer);
+		std::map<int, User> users = cl.initialNearUsers;
+		std::vector<int> droneusersUniqueIDs = drone.provideService(users);
+		for (auto& st : basestations)
+		{
+			st.eraseChannels(droneusersUniqueIDs);
+		}
+		drones.push_back(drone);
+		droneid++;
+	}
+	std::cout << 1;
+	/*
+*  THIS IS THE END OF MEAN-SHIFT ALGORITHM
+*
+*     BELOW IS THE MINI BATCH K-MEAN CLUSTERING
+			  ALGORITHM
+*               */
+
+	/*
 	std::cout << "MiniBACH ALGORITHM" << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
@@ -385,6 +489,15 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 	}
 
 	std::cout << "SPEC EFFIC " << spectral << std::endl;
+	*/
+	/*
+*  THIS IS THE END OF BATCH ALGORITHM
+*
+*     BELOW IS THE UDP CLUSTERING 
+              ALGORITHM
+*               */
+
+
 	/*
 	std::cout << "UDP ALGORITHM" << std::endl;
 	std::vector<Drone> drones;
