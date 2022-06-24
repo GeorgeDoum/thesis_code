@@ -200,6 +200,29 @@ bool checkIfAlreadyIntoCluster(User& user, std::vector<Cluster>& clusters)
 	}
 }
 
+double calculateInterference(User& user, std::vector<BaseStation>& basestations, int currentStationID, std::vector<Drone>& drones)
+{
+	double sum = 0;
+	for (BaseStation& station : basestations)
+	{
+		double channel = station.provideService(user, 1);
+		double Pr = (station.getPrs() * channel * (-10)) / user.getTemporaryPathLoss(); //Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
+		sum = sum + Pr;
+		
+	}
+
+	for (Drone& drone : drones)
+	{
+		if (drone.getId() != currentStationID)
+		{
+			double Pr = (drone.getPrs() * user.getChannel() / user.getPathLoss()); 
+			sum = sum + Pr;
+		}
+	}
+	return sum;
+}
+
+
 std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations, std::vector<User>& users, SDL_Renderer* renderer)
 {
 	/*  https://www.geeksforgeeks.org/ml-k-medoids-clustering-with-example/?fbclid=IwAR2_onM03shuKGWYKgvG7awWo5TA4Ma25QQd8BQtrEzagNiJnsjLR_u-95w
@@ -210,7 +233,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 
 												*/
 	
-												
+		
 	//calculate total mean RSs before UAV deployment
 	double generalSum = 0.0;
 	for (auto& s : basestations)
@@ -234,7 +257,135 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		std::cout << "RSS => " << generalSum << std::endl;
 	}
 
-	
+	std::cout << "MiniBACH ALGORITHM" << std::endl;
+	std::vector<Drone> drones;
+	std::vector<Cluster> clusters;
+	int k = 10;
+	int iterations = 20;
+	int batchSize = ceil(users.size() / static_cast<double>(10));
+
+	// Randomly choose initial mendoids for each cluster that we created
+	for (int i = 0; i < k; i++)
+	{
+		int x = rand() % 440 + 420;
+		int y = rand() % 487 + 150;
+		SDL_SetRenderDrawColor(renderer, 250, 10, 205, SDL_ALPHA_OPAQUE);
+		SDL_RenderDrawPoint(renderer, x, y);
+		Cluster s = Cluster(x, y, i + 1);
+		clusters.emplace_back(s);
+	}
+
+	//find the closest medoid to each user as an initial calculation
+	for (User& usr : users)
+	{
+		int clusterid = findCloser(usr, clusters);
+		clusters.at(clusterid - 1).addInitialUserToCluster(usr);
+	}
+
+	for (int i = 1; i <= iterations; i++)
+	{
+		//select random users for the batch set
+		std::vector<User> batchUsers;
+		for (int j = 1; j <= batchSize; j++)
+		{
+			int randomUserElement = rand() % users.size();
+			batchUsers.push_back(users.at(randomUserElement));
+		}
+		//for each batch user find the closer cluster
+		for (auto& usr : batchUsers)
+		{
+			int clusterid = findCloser(usr, clusters);
+			clusters.at(clusterid - 1).addCurrentUserToCluster(usr);
+		}
+		//calculate the new cluster center
+		for (auto& cl : clusters)
+		{
+			double meanX = 0.0;
+			double meanY = 0.0;
+			int newX = 0;
+			int newY = 0;
+			for (auto& clusterUsr : cl.getCurrentClusterUsers())
+			{
+				meanX = meanX + clusterUsr.second.getX();
+				meanY = meanY + clusterUsr.second.getY();
+			}
+			if (meanX > 0 && meanY > 0)
+			{
+			newX = meanX / cl.currentNearUsers.size();
+			newY = meanY / cl.currentNearUsers.size();
+			cl.setOldX(cl.mendoidX);
+			cl.setOldY(cl.mendoidY);
+			cl.setX(newX);
+			cl.setY(newY);
+			}
+			cl.initialNearUsers.clear();
+			for (auto it = cl.currentNearUsers.begin(); it != cl.currentNearUsers.end(); ++it)
+			{
+				cl.initialNearUsers.insert({ it->first, it->second });
+			}
+		}
+	}
+
+	int droneid = 1;
+	for (Cluster& cl : clusters)
+	{
+		Drone drone(cl.mendoidX, cl.mendoidY, droneid, renderer);
+		std::map<int, User> users = cl.initialNearUsers;
+		std::vector<int> droneusersUniqueIDs = drone.provideService(users);
+		for (auto& st : basestations)
+		{
+			st.eraseChannels(droneusersUniqueIDs);
+		}
+		drones.push_back(drone);
+		droneid++;
+	}
+
+	//update channel ,pathloss and station id for each user (after the UAV deployment)
+	for (auto& dro : drones)
+	{
+		auto mapChannels = dro.getChannels();
+		auto mapPathlosses = dro.getPathlosses();
+		for (auto& user : users)
+		{
+			auto it = mapChannels.find(user.getUniqueID());
+			if (it != mapChannels.end())
+			{
+				user.setChannel(it->second);
+				user.setStationId(-1);
+				user.setDroneId(dro.getId());
+				user.setNumU(dro.getChannels().size());
+			}
+			auto it1 = mapPathlosses.find(user.getUniqueID());
+			if (it1 != mapPathlosses.end())
+			{
+				user.setPathLoss(it1->second);
+				user.setStationId(-1);
+				user.setDroneId(dro.getId());
+				user.setNumU(dro.getChannels().size());
+			}
+		}
+	}
+	//to calculate spectral efficiency
+	double spectral = 0.0;
+	for (auto& dr : drones)
+	{
+		for (auto& usr : users)
+		{
+			if (usr.getStationId() == -1)
+			{
+				double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
+				double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
+				double SINR = (Pr / (4 + I)) * 10;
+				usr.setSINR(abs(SINR));
+				double rate = ((5e+6 / usr.getNumU()) / (5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
+				spectral = spectral + rate;
+			}
+		}
+		std::cout << "SPEC EFFIC " << spectral << std::endl;
+	}
+
+	std::cout << "SPEC EFFIC " << spectral << std::endl;
+	/*
 	std::cout << "UDP ALGORITHM" << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
@@ -372,6 +523,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		i++;
 	}
 	//The optimal final clusters with the coordinates that the drones should be deployed & cover
+	int droneid = 1;
 	for (Cluster& cl : clusters)
 	{
 		for (auto& id : idsOfFinalClusters)
@@ -380,7 +532,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			{
 				if (cl.initialNearUsers.size() > 5)
 				{
-					Drone drone(cl.mendoidX, cl.mendoidY, renderer);
+					Drone drone(cl.mendoidX, cl.mendoidY, droneid, renderer);
 					std::map<int, User> users = cl.initialNearUsers;
 					std::vector<int> droneusersUniqueIDs = drone.provideService(users);
 					for (auto& st : basestations)
@@ -388,11 +540,40 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 						st.eraseChannels(droneusersUniqueIDs);
 					}
 					drones.push_back(drone);
+					droneid++;
 				}
 
 			}
 		}
 	}
+
+	//update channel and pathloss for each user (after the UAV deployment)
+	for (auto& dro : drones)
+	{
+		auto mapChannels = dro.getChannels();
+		auto mapPathlosses = dro.getPathlosses();
+		for (auto& user : users)
+		{
+			auto it = mapChannels.find(user.getUniqueID());
+			if (it != mapChannels.end())
+			{
+				user.setChannel(it->second);
+				user.setStationId(-1);
+				user.setDroneId(dro.getId());
+				user.setNumU(dro.getChannels().size());
+			}
+			auto it1 = mapPathlosses.find(user.getUniqueID());
+			if (it1 != mapPathlosses.end())
+			{
+				user.setPathLoss(it1->second);
+				user.setStationId(-1);
+				user.setDroneId(dro.getId());
+				user.setNumU(dro.getChannels().size());
+			}
+		}
+	}
+	*/
+	/*
 	//to calculate the Rss after UAV deployement
 	double generalSum1 = 0.0;
 	int i1 = 1;
@@ -413,13 +594,57 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			double Pr = (-6.9 * (ch.second *ch.second) ) / pathloss;
 			sumPr = sumPr + Pr;
 		}
-		double something = sumPr;
-		generalSum1 = (generalSum1 + something/i1);
+		generalSum1 = (generalSum1 + sumPr) / i1;
 		double output = generalSum - generalSum1;
 		std::cout << "RSS => " << output << std::endl;
 		i++;
+	}*/
+
+	/*
+//to calculate the Sum Rate
+double sumRate = 0.0;
+for (auto& dr : drones)
+{
+	for (auto& usr : users)
+	{
+		if (usr.getStationId() == -1)
+		{
+			double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();
+			double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
+			double SINR = (Pr / (4 + I)) * 10;
+			usr.setSINR(abs(SINR));
+			double rate = (5e+6 / usr.getNumU()) * (log2(1 + abs(SINR)));
+			sumRate = sumRate + rate;
+		}
 	}
-	
+	std::cout << "SUM RATE " << sumRate << std::endl;
+}
+
+std::cout<< "SUM RATE " << sumRate << std::endl;
+*/
+	/*
+//to calculate spectral efficiency
+double spectral = 0.0;
+for (auto& dr : drones)
+{
+	for (auto& usr : users)
+	{
+		if (usr.getStationId() == -1)
+		{
+			double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
+			double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
+			double SINR = (Pr / (4 + I)) * 10;
+			usr.setSINR(abs(SINR));
+			double rate = ((5e+6/usr.getNumU())/(5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
+			spectral = spectral + rate;
+		}
+	}
+	std::cout << "SUM RATE " << spectral << std::endl;
+}
+
+std::cout << "SUM RATE " << spectral << std::endl;
+
+	*/
 		
 		/*			
 	*  THIS IS THE END OF UDP ALGORITHM
@@ -427,7 +652,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 	*     BELOW IS THE K-MEAN MENDOID 
 	         CLUSTERING ALGORITHM  
 	*               */
-	/*
+/*
 	std::cout << "KDP ALGORITHM" << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
@@ -554,6 +779,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		i++;
 	}
 	//The optimal final clusters with the coordinates that the drones should be deployed & cover
+	int droneid = 1;
 	for (Cluster& cl : clusters)
 	{
 		for (auto& id : idsOfFinalClusters)
@@ -562,7 +788,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			{
 				if (cl.initialNearUsers.size() > 3)
 				{
-					Drone drone(cl.mendoidX, cl.mendoidY, renderer);
+					Drone drone(cl.mendoidX, cl.mendoidY, droneid, renderer);
 					std::map<int, User> users = cl.initialNearUsers;
 					std::vector<int> droneusersUniqueIDs = drone.provideService(users);
 
@@ -571,40 +797,40 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 						st.eraseChannels(droneusersUniqueIDs);
 					}
 					drones.push_back(drone);
+					droneid++;
 				}
 
 			}
 		}
 	}
-
-
-		//to calculate the Rss after UAV deployement
-	double generalSum1 = 0.0;
-	int i1 = 1;
-
-	for (auto& d : drones)
+	//update channel ,pathloss and station id for each user (after the UAV deployment)
+	for (auto& dro : drones)
 	{
-		double sumPr = 0;
-		for (auto& ch : d.getChannels())
+		auto mapChannels = dro.getChannels();
+		auto mapPathlosses = dro.getPathlosses();
+		for (auto& user : users)
 		{
-			double pathloss = 0.0;
-			for (auto& pa : d.getPathlosses())
+			auto it = mapChannels.find(user.getUniqueID());
+			if (it != mapChannels.end())
 			{
-				if (pa.first == ch.first)
-				{
-					pathloss = pa.second;
-				}
+				user.setChannel(it->second);
+				user.setStationId(-1);
+				user.setDroneId(dro.getId());
+				user.setNumU(dro.getChannels().size());
 			}
-			double Pr = (-6.9 * (ch.second *ch.second) ) / pathloss;
-			sumPr = sumPr + Pr;
+			auto it1 = mapPathlosses.find(user.getUniqueID());
+			if (it1 != mapPathlosses.end())
+			{
+				user.setPathLoss(it1->second);
+				user.setStationId(-1);
+				user.setDroneId(dro.getId());
+				user.setNumU(dro.getChannels().size());
+			}
 		}
-		double something = sumPr;
-		generalSum1 = (generalSum1 + something/i1);
-		double output = generalSum - generalSum1;
-		std::cout << "RSS => " << output << std::endl;
-		i++;
 	}
+
 	*/
+
 	
 	// END OF KDP ALGORITHM
 
@@ -623,4 +849,90 @@ for (auto& d : drones)
 	percentage = percentage + percentage1;
 	std::cout << percentage << "  %" << std::endl;
 }
+*/
+
+
+//to calculate the Rss after UAV deployement
+/*
+double generalSum1 = 0.0;
+int i1 = 1;
+
+for (auto& d : drones)
+{
+	double sumPr = 0;
+	for (auto& ch : d.getChannels())
+	{
+		double pathloss = 0.0;
+		for (auto& pa : d.getPathlosses())
+		{
+			if (pa.first == ch.first)
+			{
+				pathloss = pa.second;
+			}
+		}
+		double Pr = (-6.9 * (ch.second *ch.second) ) / pathloss;
+		sumPr = sumPr + Pr;
+	}
+	generalSum1 = (generalSum1 + sumPr)/i1;
+	double output = generalSum - generalSum1;
+	std::cout << "RSS => " << output << std::endl;
+	i++;
+}*/
+
+
+
+
+
+
+
+
+
+
+
+/*
+//to calculate the Sum Rate
+double sumRate = 0.0;
+for (auto& dr : drones)
+{
+	for (auto& usr : users)
+	{
+		if (usr.getStationId() == -1)
+		{
+			double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();
+			double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
+			double SINR = (Pr / (4 + I)) * 10;
+			usr.setSINR(abs(SINR));
+			double rate = (5e+6 / usr.getNumU()) * (log2(1 + abs(SINR)));
+			sumRate = sumRate + rate;
+		}
+	}
+	std::cout << "SUM RATE " << sumRate << std::endl;
+}
+
+std::cout<< "SUM RATE " << sumRate << std::endl;
+*/
+
+
+
+/*
+//to calculate spectral efficiency
+double spectral = 0.0;
+for (auto& dr : drones)
+{
+	for (auto& usr : users)
+	{
+		if (usr.getStationId() == -1)
+		{
+			double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
+			double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
+			double SINR = (Pr / (4 + I)) * 10;
+			usr.setSINR(abs(SINR));
+			double rate = ((5e+6/usr.getNumU())/(5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
+			spectral = spectral + rate;
+		}
+	}
+	std::cout << "SUM RATE " << spectral << std::endl;
+}
+
+std::cout << "SUM RATE " << spectral << std::endl;
 */

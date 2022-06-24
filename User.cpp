@@ -23,6 +23,16 @@ void User::setStationId(int id)
 	stationId = id;
 }
 
+void User::setDroneId(int id)
+{
+	droneId = id;
+}
+
+int User::getDroneId()
+{
+	return droneId;
+}
+
 void User::setUniqueID(int id)
 {
 	int t = rand() % 999 + 100;
@@ -98,4 +108,14 @@ double User::getSINR()
 void User::DrawLocation(SDL_Renderer* renderer)
 {
 	SDL_RenderDrawPoint(renderer, x_axis, y_axis);
+}
+
+void User::setNumU(int i)
+{
+	droneNumOfUsers = i;
+}
+
+int User::getNumU()
+{
+	return droneNumOfUsers;
 }

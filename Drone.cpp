@@ -1,8 +1,9 @@
 #include "Drone.h"
 
-Drone::Drone(int x, int y, SDL_Renderer* renderer)
+Drone::Drone(int x, int y,int id, SDL_Renderer* renderer)
 {
 	setX(x);
+	setDroneId(id);
 	setY(y);
 	publishPosition(getX(), getY(), renderer);
 }
@@ -12,9 +13,19 @@ void Drone::setX(int x)
 	x_axis = x;
 }
 
+void Drone::setDroneId(int i)
+{
+	id = i;
+}
+
 int Drone::getX()
 {
 	return x_axis;
+}
+
+int Drone::getId()
+{
+	return id;
 }
 
 void Drone::setY(int y)

@@ -18,6 +18,8 @@ public:
 
 	void setStationId(int id);
 
+	void setDroneId(int id);
+
 	void setChannel (double& cha);
 	
 	void setUniqueID(int id);
@@ -45,17 +47,23 @@ public:
 	double getTemporaryPathLoss();
 
 	double getSINR();
+	
+	int getDroneId();
 
 	void DrawLocation(SDL_Renderer* renderer);
 
+	void setNumU(int i);
+	int getNumU();
 private:
 	int x_axis;
 	int y_axis;
 	int stationId;
+	int droneId;
 	int heightOfUserAntenna;
 	int uniqueID;
 	double channel;
 	double pathLoss;
 	double tempPathLoss;
 	double SINR;
+	int droneNumOfUsers;
 };

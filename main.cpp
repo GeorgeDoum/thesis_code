@@ -20,6 +20,7 @@
 #include <chrono>
 #include <thread>
 #include <dos.h>
+#include "Measurements.h"
 
 int main(int argc, char* argv[])
 {
@@ -86,6 +87,7 @@ int main(int argc, char* argv[])
 			{
 				drawTable(renderer, station.getNumberOfChannels(), station.getID(), 1);
 			}
+			doMeasurements(baseStations, users);
 			Button uavButton;
 			uavButton.show(renderer);
 			int deploymentcounter = 0;

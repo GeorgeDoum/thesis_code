@@ -26,6 +26,7 @@
     <ClCompile Include="Hexagon.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Button.cpp" />
+    <ClCompile Include="Measurements.cpp" />
     <ClCompile Include="Optimal_points.cpp" />
     <ClCompile Include="User.cpp" />
   </ItemGroup>
@@ -36,6 +37,7 @@
     <ClInclude Include="Drone.h" />
     <ClInclude Include="Hexagon.h" />
     <ClInclude Include="Button.h" />
+    <ClInclude Include="Measurements.h" />
     <ClInclude Include="Optimal_points.h" />
     <ClInclude Include="User.h" />
   </ItemGroup>
