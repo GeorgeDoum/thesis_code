@@ -256,7 +256,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		generalSum = (generalSum + something);
 		std::cout << "RSS => " << generalSum << std::endl;
 	}
-
+	/*
 	std::cout << "Mean-Shift ALGORITHM" << std::endl;
 	std::cout << "out of  " << users.size() << std::endl;
 	std::vector<Drone> drones;
@@ -406,8 +406,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			}
 		}
 	}
-
-
+	*/
 	/*
 *  THIS IS THE END OF MEAN-SHIFT ALGORITHM
 *
@@ -547,26 +546,6 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			}
 		}
 	}
-	//to calculate spectral efficiency
-	double spectral = 0.0;
-	for (auto& dr : drones)
-	{
-		for (auto& usr : users)
-		{
-			if (usr.getStationId() == -1)
-			{
-				double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
-				double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
-				double SINR = (Pr / (4 + I)) * 10;
-				usr.setSINR(abs(SINR));
-				double rate = ((5e+6 / usr.getNumU()) / (5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
-				spectral = spectral + rate;
-			}
-		}
-		std::cout << "SPEC EFFIC " << spectral << std::endl;
-	}
-
-	std::cout << "SPEC EFFIC " << spectral << std::endl;
 	*/
 	/*
 *  THIS IS THE END OF BATCH ALGORITHM
@@ -575,8 +554,8 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
               ALGORITHM
 *               */
 
-
-	/*
+/*
+	
 	std::cout << "UDP ALGORITHM" << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
@@ -763,7 +742,26 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			}
 		}
 	}
-	*/
+	
+	double spectral = 0.0;
+	for (auto& dr : drones)
+	{
+		for (auto& usr : users)
+		{
+			if (usr.getStationId() == -1)
+			{
+				double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
+				double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
+				double SINR = (Pr / (4 + I)) ;
+				usr.setSINR(abs(SINR));
+				double rate = ((5e+6 / usr.getNumU()) / (5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
+				spectral = spectral + rate;
+			}
+		}
+		std::cout << "Spectral " << spectral << std::endl;
+	}
+
+
 	/*
 	//to calculate the Rss after UAV deployement
 	double generalSum1 = 0.0;
@@ -802,7 +800,7 @@ for (auto& dr : drones)
 		{
 			double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();
 			double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
-			double SINR = (Pr / (4 + I)) * 10;
+			double SINR = (Pr / (4 + I));
 			usr.setSINR(abs(SINR));
 			double rate = (5e+6 / usr.getNumU()) * (log2(1 + abs(SINR)));
 			sumRate = sumRate + rate;
@@ -813,29 +811,6 @@ for (auto& dr : drones)
 
 std::cout<< "SUM RATE " << sumRate << std::endl;
 */
-	/*
-//to calculate spectral efficiency
-double spectral = 0.0;
-for (auto& dr : drones)
-{
-	for (auto& usr : users)
-	{
-		if (usr.getStationId() == -1)
-		{
-			double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
-			double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
-			double SINR = (Pr / (4 + I)) * 10;
-			usr.setSINR(abs(SINR));
-			double rate = ((5e+6/usr.getNumU())/(5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
-			spectral = spectral + rate;
-		}
-	}
-	std::cout << "SUM RATE " << spectral << std::endl;
-}
-
-std::cout << "SUM RATE " << spectral << std::endl;
-
-	*/
 		
 		/*			
 	*  THIS IS THE END OF UDP ALGORITHM
@@ -843,7 +818,7 @@ std::cout << "SUM RATE " << spectral << std::endl;
 	*     BELOW IS THE K-MEAN MENDOID 
 	         CLUSTERING ALGORITHM  
 	*               */
-/*
+	
 	std::cout << "KDP ALGORITHM" << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
@@ -944,6 +919,30 @@ std::cout << "SUM RATE " << spectral << std::endl;
 	}
 	std::cout << "K-MEAN CLUSTERING PROCESS DONE" << std::endl;
 
+	//make sure there are no duplicates
+	for (auto& usr : users)
+	{
+		bool found = false;
+		int idToFind = usr.getUniqueID();
+		for (auto& cl : clusters)
+		{
+			auto it = cl.initialNearUsers.find(idToFind);
+			if (it != cl.initialNearUsers.end())
+			{
+				if (found)
+				{
+					cl.initialNearUsers.erase(it);
+				}
+				else
+				{
+					found = true;
+				}
+			}
+		}
+	}
+
+
+
 	double a = 0.5; //weightening factor
 	//calculate the weightScores
 	std::map<int, double> weightScores;
@@ -1020,8 +1019,26 @@ std::cout << "SUM RATE " << spectral << std::endl;
 		}
 	}
 
-	*/
+	//to calculate spectral efficiency
+	double spectral = 0.0;
+	for (auto& dr : drones)
+	{
+		for (auto& usr : users)
+		{
+			if (usr.getStationId() == -1)
+			{
+				double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
+				double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
+				double SINR = (Pr / (4 + I));
+				usr.setSINR(abs(SINR));
+				double rate = ((5e+6 / usr.getNumU()) / (5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
+				spectral = spectral + rate;
+			}
+		}
+		std::cout << "SUM RATE " << spectral << std::endl;
+	}
 
+	std::cout << "SUM RATE " << spectral << std::endl;
 	
 	// END OF KDP ALGORITHM
 
@@ -1091,7 +1108,7 @@ for (auto& dr : drones)
 		{
 			double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();
 			double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
-			double SINR = (Pr / (4 + I)) * 10;
+			double SINR = (Pr / (4 + I));
 			usr.setSINR(abs(SINR));
 			double rate = (5e+6 / usr.getNumU()) * (log2(1 + abs(SINR)));
 			sumRate = sumRate + rate;
@@ -1116,7 +1133,7 @@ for (auto& dr : drones)
 		{
 			double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
 			double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
-			double SINR = (Pr / (4 + I)) * 10;
+			double SINR = (Pr / (4 + I));
 			usr.setSINR(abs(SINR));
 			double rate = ((5e+6/usr.getNumU())/(5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
 			spectral = spectral + rate;
@@ -1126,4 +1143,29 @@ for (auto& dr : drones)
 }
 
 std::cout << "SUM RATE " << spectral << std::endl;
+*/
+
+
+/*
+//to calculate spectral efficiency
+double spectral = 0.0;
+for (auto& dr : drones)
+{
+	for (auto& usr : users)
+	{
+		if (usr.getStationId() == -1)
+		{
+			double Pr = (-6.9999 * usr.getChannel() * (-10)) / usr.getPathLoss();//Gt = 15dbi == dbm = dbi +2.15 thus Gt ==0.1W == -10 dB
+			double I = calculateInterference(usr, basestations, usr.getDroneId(), drones);
+			double SINR = (Pr / (4 + I));
+			usr.setSINR(abs(SINR));
+			double rate = ((5e+6 / usr.getNumU()) / (5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
+			spectral = spectral + rate;
+		}
+	}
+	std::cout << "SPEC EFFIC " << spectral << std::endl;
+}
+
+std::cout << "SPEC EFFIC " << spectral << std::endl;
+
 */

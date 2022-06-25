@@ -27,7 +27,7 @@ for (auto& station : basestations)
 		{
 			double Pr = (13 * usr.getChannel() * (-10)) / usr.getPathLoss();
 			double I = calculateInterference2(usr, basestations, usr.getStationId());
-			double SINR = (Pr / (4 + I)) * 10;
+			double SINR = (Pr / (4 + I));
 			double rate = (5e+6 / station.getChannels().size()) * (log2(1 + abs(SINR)));
 			sumRate = sumRate + rate;
 		}
@@ -48,7 +48,7 @@ for (auto& station : basestations)
 		{
 			double Pr = (13 * usr.getChannel() * (-10)) / usr.getPathLoss();
 			double I = calculateInterference2(usr, basestations, usr.getStationId());
-			double SINR = (Pr / (4 + I)) * 10;
+			double SINR = (Pr / (4 + I));
 			double rate = ((5e+6/station.getChannels().size())/ (5e+6 + 5e+6)) * (log2(1 + abs(SINR)));
 			spectral = spectral + rate;
 		}
