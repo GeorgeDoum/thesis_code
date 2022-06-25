@@ -258,6 +258,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 	}
 
 	std::cout << "Mean-Shift ALGORITHM" << std::endl;
+	std::cout << "out of  " << users.size() << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
 	int windowSize = 50;
@@ -328,16 +329,43 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			cl.currentNearUsers.clear();
 		} while (convergencecounter == 0);
 
-		if (cl.initialNearUsers.size() > 7)
+		bool accepted = true;
+		for (auto& c : clusters)
 		{
-			//check for same coordinates
+			if ((c.mendoidX == cl.mendoidX) && (c.mendoidY == cl.mendoidY) || ( ( abs(c.mendoidX - cl.mendoidX) <70 ) && ( abs(c.mendoidY - cl.mendoidY) < 70 ) ) )
+			{
+				accepted = false;
+			}
+		}
+		if ((cl.initialNearUsers.size() > 7) && accepted)
+		{
 			//check for close mendoids
 			clusters.emplace_back(cl);
 		}
 
 	} while (clusters.size() < 10);
 
-
+	//make sure there are no duplicates
+	for (auto& usr : users)
+	{
+		bool found = false;
+		int idToFind = usr.getUniqueID();
+		for (auto& cl : clusters)
+		{
+			auto it = cl.initialNearUsers.find(idToFind);
+			if (it != cl.initialNearUsers.end())
+			{
+				if (found)
+				{
+					cl.initialNearUsers.erase(it);
+				}
+				else
+				{
+					found = true;
+				}
+			}
+		}
+	}
 
 	int droneid = 1;
 	for (Cluster& cl : clusters)
@@ -352,7 +380,34 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 		drones.push_back(drone);
 		droneid++;
 	}
-	std::cout << 1;
+
+	//update channel ,pathloss and station id for each user (after the UAV deployment)
+	for (auto& dro : drones)
+	{
+		auto mapChannels = dro.getChannels();
+		auto mapPathlosses = dro.getPathlosses();
+		for (auto& user : users)
+		{
+			auto it = mapChannels.find(user.getUniqueID());
+			if (it != mapChannels.end())
+			{
+				user.setChannel(it->second);
+				user.setStationId(-1);
+				user.setDroneId(dro.getId());
+				user.setNumU(dro.getChannels().size());
+			}
+			auto it1 = mapPathlosses.find(user.getUniqueID());
+			if (it1 != mapPathlosses.end())
+			{
+				user.setPathLoss(it1->second);
+				user.setStationId(-1);
+				user.setDroneId(dro.getId());
+				user.setNumU(dro.getChannels().size());
+			}
+		}
+	}
+
+
 	/*
 *  THIS IS THE END OF MEAN-SHIFT ALGORITHM
 *
@@ -362,6 +417,7 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 
 	/*
 	std::cout << "MiniBACH ALGORITHM" << std::endl;
+	std::cout << "out of  " << users.size() << std::endl;
 	std::vector<Drone> drones;
 	std::vector<Cluster> clusters;
 	int k = 10;
@@ -429,6 +485,28 @@ std::vector<Drone> calculateOptimalPoints(std::vector<BaseStation>& basestations
 			}
 		}
 	}
+	//make sure there are no duplicates
+	for (auto& usr : users)
+	{
+		bool found = false;
+		int idToFind = usr.getUniqueID();
+		for (auto& cl : clusters)
+		{
+			auto it = cl.initialNearUsers.find(idToFind);
+			if (it != cl.initialNearUsers.end())
+			{
+				if (found)
+				{
+					cl.initialNearUsers.erase(it);
+				}
+				else
+				{
+					found = true;
+				}
+			}
+		}
+	}
+
 
 	int droneid = 1;
 	for (Cluster& cl : clusters)
